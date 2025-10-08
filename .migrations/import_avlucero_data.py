@@ -25,11 +25,14 @@ from datetime import datetime, date, timedelta
 from decimal import Decimal
 
 # Configurar Django
-sys.path.append('/home/abueno/workspaces/alvarobueno/avl-propuesta/gestor-asociaciones')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)
+sys.path.append(project_dir)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asonet_django.settings')
 django.setup()
 
 from django.db import transaction
+from django.utils import timezone
 from core.models import AsociacionVecinal
 from proyectos.models import Proyecto
 from eventos.models import Evento
@@ -130,64 +133,55 @@ class AVLuceroDataImporter:
                 'nombre': 'Fiestas del Barrio Lucero 2025',
                 'descripcion': 'Celebración anual de las fiestas populares del barrio Lucero. Nueve días de actividades, conciertos, actividades infantiles, gastronomía y convivencia vecinal.',
                 'lugar': 'Calles del barrio Lucero, plaza principal, local AVL',
-                'fecha': datetime(year_2025, 9, 13, 16, 0),
+                'fecha': timezone.make_aware(datetime(year_2025, 9, 13, 16, 0)),
                 'duracion': timedelta(days=9),
-                'participantes': 2500,
                 'colaboradores': 'Junta Municipal Latina, comerciantes locales, grupos musicales, voluntariado',
-                'observaciones': 'Evento principal del año. Requiere múltiples permisos y coordinación con servicios municipales.'
+                'observaciones': 'Evento principal del año. Requiere múltiples permisos y coordinación con servicios municipales. Participación estimada: 2500 personas.'
             },
             {
                 'nombre': 'Carnaval Lucero 2026',
                 'descripcion': 'Celebración anual del carnaval del barrio con actividades familiares: pintacaras, batukada, concurso de disfraces, bailes y chocolatada popular.',
                 'lugar': 'Metro Lucero y calles adyacentes',
-                'fecha': datetime(year_2026, 2, 22, 16, 30),
+                'fecha': timezone.make_aware(datetime(year_2026, 2, 22, 16, 30)),
                 'duracion': timedelta(hours=4),
-                'lugar': 'Centro Cultural de la Mujer de Lucero',
-                'fecha': datetime(year_2025, 4, 5, 18, 0),
-                'duracion': timedelta(hours=3),
-                'participantes': 150,
                 'colaboradores': 'Artistas locales, Centro Cultural de la Mujer, voluntariado cultural',
-                'observaciones': 'Acceso libre hasta completar aforo. Incluye picoteo vegetariano y vegano.'
+                'observaciones': 'Acceso libre hasta completar aforo. Incluye picoteo vegetariano y vegano. Participación estimada: 150 personas.'
             },
             {
                 'nombre': 'Talleres Competencias Digitales 2025',
                 'descripcion': 'Programa anual de talleres para reducir la brecha digital. Enseñanza de uso de smartphones, internet, correo electrónico, WhatsApp y servicios digitales.',
                 'lugar': 'Local Asociación Vecinal Lucero (C/Alhambra 21)',
-                'fecha': datetime(year_2025, 4, 1, 11, 0),
+                'fecha': timezone.make_aware(datetime(year_2025, 4, 1, 11, 0)),
                 'duracion': timedelta(days=240),  # abril a diciembre
-                'participantes': 120,
                 'colaboradores': 'Voluntariado especializado, FRAVM, Fundación ESPLAI',
-                'observaciones': 'Grupos reducidos de máximo 8 personas. Horario de mañanas 11:00-13:00.'
+                'observaciones': 'Grupos reducidos de máximo 8 personas. Horario de mañanas 11:00-13:00. Participación estimada: 120 personas.'
             },
             {
                 'nombre': 'Charla Derechos Laborales',
                 'descripcion': 'Charla-coloquio sobre derechos laborales organizada por el Comité de Jóvenes. Información sobre convenios, contratos, sindicatos y derechos de autónomos.',
                 'lugar': 'Local AVL (C/Alhambra 21)',
-                'fecha': datetime(year_2025, 4, 26, 12, 0),
+                'fecha': timezone.make_aware(datetime(year_2025, 4, 26, 12, 0)),
                 'duracion': timedelta(hours=2, minutes=30),
-                'participantes': 40,
                 'colaboradores': 'Comité de Jóvenes AVL, representante sindical, abogado laboralista',
-                'observaciones': 'Incluye aperitivo. Actividad previa al 1º de Mayo.'
+                'observaciones': 'Incluye aperitivo. Actividad previa al 1º de Mayo. Participación estimada: 40 personas.'
             },
             {
                 'nombre': 'Semana Cultural - Conciertos',
                 'descripcion': 'Programa de conciertos del Conservatorio Teresa Berganza durante la semana cultural del distrito. Múltiples actuaciones de música clásica y contemporánea.',
                 'lugar': 'Diversas ubicaciones del barrio',
-                'fecha': datetime(year_2025, 3, 10, 19, 0),
+                'fecha': timezone.make_aware(datetime(year_2025, 3, 10, 19, 0)),
                 'duracion': timedelta(days=7),
-                'participantes': 500,
                 'colaboradores': 'Conservatorio Teresa Berganza, Junta Municipal Latina',
-                'observaciones': 'Programa conjunto con el distrito. Conciertos gratuitos.'
+                'observaciones': 'Programa conjunto con el distrito. Conciertos gratuitos. Participación estimada: 500 personas.'
             },
             {
                 'nombre': 'Manifestación 8M Madrid',
                 'descripcion': 'Participación en la manifestación del Día Internacional de la Mujer. Concentración y marcha por los derechos de las mujeres y políticas feministas.',
                 'lugar': 'Desde Atocha hasta Plaza de España',
-                'fecha': datetime(year_2025, 3, 8, 12, 0),
+                'fecha': timezone.make_aware(datetime(year_2025, 3, 8, 12, 0)),
                 'duracion': timedelta(hours=4),
-                'participantes': 80,
                 'colaboradores': 'Movimiento feminista, FRAVM, organizaciones de mujeres',
-                'observaciones': 'Participación como bloque de asociaciones vecinales.'
+                'observaciones': 'Participación como bloque de asociaciones vecinales. Participación estimada: 80 personas.'
             }
         ]
 
@@ -267,6 +261,14 @@ class AVLuceroDataImporter:
         """Importar eventos"""
         print("🎪 Importando eventos...")
 
+        # Obtener la primera socia de la asociación para usar como responsable
+        from socias.models import Socia
+        primera_socia = Socia.objects.filter(asociacion=self.asociacion).first()
+        
+        if not primera_socia:
+            print("⚠️  No hay socias en la asociación, no se pueden crear eventos (requieren responsable)")
+            return
+
         for evento_data in self.get_eventos_data():
             try:
                 # Verificar si ya existe
@@ -280,13 +282,15 @@ class AVLuceroDataImporter:
                     continue
 
                 if not self.dry_run:
+                    # Agregar responsable y asociación a los datos
+                    evento_data['responsable'] = primera_socia
                     evento = Evento.objects.create(
                         asociacion=self.asociacion,
                         **evento_data
                     )
                     print(f"✅ Evento creado: {evento.nombre}")
                 else:
-                    print(f"🔍 [DRY-RUN] Crearía evento: {evento_data['nombre']}")
+                    print(f"🔍 [DRY-RUN] Crearía evento: {evento_data['nombre']} (responsable: {primera_socia.nombre})")
 
                 self.stats['eventos_created'] += 1
 

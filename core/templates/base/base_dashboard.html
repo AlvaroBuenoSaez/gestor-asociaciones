@@ -25,6 +25,9 @@
                     </a>
                     <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="{% url 'users:dashboard' %}">Dashboard</a></li>
+                        {% if user.is_superuser %}
+                        <li><a class="dropdown-item" href="{% url 'admin:index' %}">🔧 Admin Django</a></li>
+                        {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'users:logout' %}">Cerrar Sesión</a></li>
                     </ul>

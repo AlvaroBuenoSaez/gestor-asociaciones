@@ -63,6 +63,11 @@
                 ⚙️ Gestionar Usuarios Web
             </a>
             {% endif %}
+            {% if user.is_superuser %}
+            <a href="{% url 'admin:index' %}" class="list-group-item list-group-item-action">
+                🔧 Administración Django
+            </a>
+            {% endif %}
         </div>
     </div>
 </div>

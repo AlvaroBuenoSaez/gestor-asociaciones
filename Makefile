@@ -25,16 +25,19 @@ show-commands:
 	@echo "# 6) (Optional) Import socias into 'Asociación Vecinal Lucero' (dry-run recommended first):"
 	@echo ".venv/bin/python create_sample_associations.py --import-socias --asociacion-registro AV004 --dry-run"
 	@echo ""
+	@echo "# 7) (Optional) Import activities, projects and financial data:"
+	@echo ".venv/bin/python .migrations/import_avlucero_data.py --asociacion_id 4 --dry-run"
+	@echo ""
 	@echo "# You can remove the --dry-run flag to perform the real import."
 	@echo ""
 
-.PHONY: all init migrate createsuper seed clean
+.PHONY: all init migrate createsuper seed import-activities import-activities-dry clean
 
 PYTHON ?= python3
 VENV := .venv
 PY := $(VENV)/bin/python
 
-all: init migrate createsuper seed
+all: init migrate createsuper seed import-activities
 
 init:
 	@echo "==> Creating virtualenv (if missing)"
@@ -54,21 +57,19 @@ migrate: init
 
 createsuper: migrate
 	@echo "==> Creating superuser 'admin' (password: admin) if not exists"
-	@$(PY) - <<'PY'
-from django.contrib.auth import get_user_model
-User = get_user_model()
-username='admin'
-pw='admin'
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, password=pw, email='admin@example.com')
-    print('Superuser created')
-else:
-    print('Superuser already exists')
-PY
+	@$(PY) scripts/create_admin.py
 
 seed: createsuper
 	@echo "==> Creating sample associations and importing socias into 'Asociación Vecinal Lucero' (AV004)"
 	@$(PY) create_sample_associations.py --import-socias --asociacion-registro AV004
+
+import-activities: seed
+	@echo "==> Importing activities, projects, and financial data into 'Asociación Vecinal Lucero'"
+	@$(PY) .migrations/import_avlucero_data.py --asociacion_id 4
+
+import-activities-dry: seed
+	@echo "==> [DRY-RUN] Checking what activities, projects, and financial data would be imported"
+	@$(PY) .migrations/import_avlucero_data.py --asociacion_id 4 --dry-run
 
 clean:
 	@echo "==> Clean: (does not remove venv)"

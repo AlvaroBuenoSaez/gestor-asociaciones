@@ -21,7 +21,10 @@ from pathlib import Path
 from datetime import datetime
 
 # Configurar Django
-sys.path.append('/home/abueno/workspaces/alvarobueno/avl-propuesta/gestor-asociaciones')
+from pathlib import Path
+# Añadir la raíz del proyecto al sys.path para poder importar settings cuando se ejecute desde Make/subprocess
+project_root = Path(__file__).resolve().parents[1]
+sys.path.append(str(project_root))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asonet_django.settings')
 django.setup()
 
@@ -325,12 +328,26 @@ class SociasImporter:
 
 def main():
     parser = argparse.ArgumentParser(description='Importar socias desde archivo Excel/ODS')
-    parser.add_argument('--asociacion_id', type=int, required=True,
+    parser.add_argument('--asociacion_id', type=int,
                        help='ID de la asociación donde importar')
+    parser.add_argument('--asociacion_registro', type=str,
+                       help="Número de registro de la asociación destino (ej. 'AV004')")
     parser.add_argument('--dry-run', action='store_true',
                        help='Ejecutar sin guardar cambios (solo mostrar)')
 
     args = parser.parse_args()
+
+    # Resolver asociacion_registro a ID si fue provisto
+    if args.asociacion_registro and not args.asociacion_id:
+        assoc = AsociacionVecinal.objects.filter(numero_registro=args.asociacion_registro).first()
+        if not assoc:
+            print(f"❌ Asociación con numero_registro {args.asociacion_registro} no encontrada")
+            sys.exit(1)
+        args.asociacion_id = assoc.id
+
+    if not args.asociacion_id:
+        print('❌ Debe pasar --asociacion_id o --asociacion_registro')
+        sys.exit(1)
 
     importer = SociasImporter(args.asociacion_id, args.dry_run)
     success = importer.import_socias()

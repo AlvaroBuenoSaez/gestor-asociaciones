@@ -46,9 +46,12 @@ def home(request):
     if not request.user.is_authenticated:
         return redirect('users:login')
 
-    if request.user.is_superuser:
-        return redirect('admin:index')  # Redirigir directamente al admin
-    elif hasattr(request.user, 'profile') and request.user.profile.asociacion:
+    # Todos los usuarios autenticados van al dashboard de usuarios
+    # Los superusuarios pueden acceder al admin desde allí si lo necesitan
+    if hasattr(request.user, 'profile') and request.user.profile.asociacion:
+        return redirect('users:dashboard')
+    elif request.user.is_superuser:
+        # Los superusuarios sin perfil también van al dashboard
         return redirect('users:dashboard')
     else:
         messages.warning(request, 'Tu cuenta aún no tiene una asociación asignada. Contacta con el administrador.')
