@@ -116,7 +116,7 @@ def create_sample_associations():
             user_obj.is_staff = False
             user_obj.save()
             print(f"✅ Removidos permisos de staff de usuario '{test_username}'")
-        
+
         asociacion_obj = AsociacionVecinal.objects.filter(numero_registro='AV004').first()
         if asociacion_obj:
             # Intentar usar el perfil; si no existe, crearlo

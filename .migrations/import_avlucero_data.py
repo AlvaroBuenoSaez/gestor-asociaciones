@@ -264,7 +264,7 @@ class AVLuceroDataImporter:
         # Obtener la primera socia de la asociación para usar como responsable
         from socias.models import Socia
         primera_socia = Socia.objects.filter(asociacion=self.asociacion).first()
-        
+
         if not primera_socia:
             print("⚠️  No hay socias en la asociación, no se pueden crear eventos (requieren responsable)")
             return

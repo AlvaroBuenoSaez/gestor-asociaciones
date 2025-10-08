@@ -1,15 +1,13 @@
-#!/usr/bin/env python
-"""
-Script de verificación de datos importados de AVL Lucero
-Muestra un resumen de los datos importados para verificar la correcta carga
-"""
+#!/u"""
 
 import os
 import sys
 import django
 
 # Configurar Django
-sys.path.append('/home/abueno/workspaces/alvarobueno/avl-propuesta/gestor-asociaciones')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)
+sys.path.append(project_dir)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asonet_django.settings')
 django.setup()
 
@@ -18,6 +16,11 @@ from proyectos.models import Proyecto
 from eventos.models import Evento
 from finanzas.models import Transaccion
 from socias.models import Socia
+
+"""
+Script de verificación de datos importados de AVL Lucero
+Muestra un resumen de los datos importados para verificar la correcta carga
+"""
 
 def verificar_datos():
     """Verificar y mostrar los datos importados"""

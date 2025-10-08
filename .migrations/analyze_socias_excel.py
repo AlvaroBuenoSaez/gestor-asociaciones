@@ -10,8 +10,10 @@ from pathlib import Path
 def analyze_socias_file():
     """Analizar el archivo de socias ODS"""
 
-    # Ruta al archivo
-    file_path = Path('/home/abueno/workspaces/alvarobueno/avl-propuesta/gestor-asociaciones/.raw_data/socias/LISTA SOCIOS diciembre-2024.ods')
+    # Ruta al archivo (relativa al directorio del script)
+    script_dir = Path(__file__).parent
+    project_dir = script_dir.parent
+    file_path = project_dir / '.raw_data' / 'socias' / 'LISTA SOCIOS diciembre-2024.ods'
 
     if not file_path.exists():
         print(f"❌ Archivo no encontrado: {file_path}")

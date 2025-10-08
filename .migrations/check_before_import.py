@@ -8,7 +8,9 @@ import sys
 import django
 
 # Configurar Django
-sys.path.append('/home/abueno/workspaces/alvarobueno/avl-propuesta/gestor-asociaciones')
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_dir = os.path.dirname(script_dir)
+sys.path.append(project_dir)
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'asonet_django.settings')
 django.setup()
 
