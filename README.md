@@ -37,12 +37,6 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Si prefieres regenerar `requirements.txt` desde cero (recomendado en entornos nuevos), crea un entorno limpio, instala solo los paquetes necesarios y ejecuta:
-
-```bash
-python -m pip freeze > requirements.txt
-```
-
 4) Preparar la base de datos
 
 ```bash
@@ -57,13 +51,56 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-6) Cargar datos de ejemplo (opcional)
+6) Cargar datos de ejemplo y migrar `.raw_data` (opcional)
 
-Hay un script de ejemplo `create_sample_associations.py` en la raíz. Revisa su contenido antes de ejecutarlo y luego:
+Hay un script de ejemplo `create_sample_associations.py` en la raíz que:
+
+- Crea asociaciones de ejemplo.
+- Crea un usuario de prueba `user` (contraseña `user`).
+- Opcionalmente puede lanzar el importador que carga socias desde archivos en `.raw_data`.
+
+Ejecutar (vinculado al entorno virtual):
 
 ```bash
-python create_sample_associations.py
+.venv/bin/python create_sample_associations.py
 ```
+
+Opciones útiles del script:
+
+- Ejecutar además el importador de socias (usa el importador existente `.migrations/import_socias_from_excel.py`):
+
+```bash
+.venv/bin/python create_sample_associations.py --import-socias --asociacion-id 1
+```
+
+- Ejecutar el importador en modo "dry-run" (no guarda cambios):
+
+```bash
+.venv/bin/python create_sample_associations.py --import-socias --asociacion-id 1 --dry-run
+```
+
+Si prefieres ejecutar el importador directamente (script independiente):
+
+```bash
+.venv/bin/python .migrations/import_socias_from_excel.py --asociacion_id 1 [--dry-run]
+```
+
+Dependencias del importador
+
+El importador usa `pandas` y `odfpy` para leer archivos ODS/Excel. Estas dependencias ya están listadas en `requirements.txt`; instálalas junto con el resto de dependencias:
+
+```bash
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+Ruta de los datos
+
+El importador lee por defecto desde `.raw_data/socias/LISTA SOCIOS diciembre-2024.ods`. Asegúrate de que el fichero existe en esa ruta relativa al repositorio o ajusta la ruta en el script `.migrations/import_socias_from_excel.py`.
+
+Notas de uso
+
+- Ejecuta `python manage.py migrate` antes de importar para asegurar que las tablas existen.
+- Revisa el script `create_sample_associations.py` antes de ejecutarlo en entornos compartidos; crea un usuario `user` con contraseña `user` por conveniencia de desarrollo.
 
 7) Levantar el servidor de desarrollo
 
