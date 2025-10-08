@@ -1,0 +1,6 @@
+<h1>Dashboard Admin</h1>
+<p>Eres superusuario</p>
+<p>Asociaciones: {{ total_associations }}</p>
+<p>Usuarios: {{ total_users }}</p>
+<a href="{% url 'admin:index' %}">Ir al Admin</a>
+<a href="{% url 'users:logout' %}">Logout</a>

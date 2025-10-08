@@ -1,0 +1,327 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Editar Evento - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+    .btn-submit {
+        min-width: 150px;
+    }
+    .preview-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid #ffc107;
+    }
+    .info-card {
+        background-color: #e7f3ff;
+        border-left: 4px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary me-3">
+                    ← Volver a Eventos
+                </a>
+                <div>
+                    <h2>✏️ Editar Evento</h2>
+                    <p class="text-muted mb-0">Modificar "{{ object.nombre }}" de {{ asociacion.nombre }}</p>
+                </div>
+            </div>
+
+            <form method="post" id="eventoForm">
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- Formulario principal -->
+                    <div class="col-md-8">
+                        <div class="card form-card">
+                            <div class="card-body">
+                                <!-- Información básica -->
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                            {{ form.nombre.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.nombre }}
+                                        {% if form.nombre.errors %}
+                                            <div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.responsable.id_for_label }}" class="form-label">
+                                            {{ form.responsable.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.responsable }}
+                                        {% if form.responsable.errors %}
+                                            <div class="text-danger small mt-1">{{ form.responsable.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Socia responsable del evento</div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                            {{ form.descripcion.label }}
+                                        </label>
+                                        {{ form.descripcion }}
+                                        {% if form.descripcion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Describe brevemente el evento</div>
+                                    </div>
+                                </div>
+
+                                <!-- Fecha y duración -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.fecha.id_for_label }}" class="form-label">
+                                            {{ form.fecha.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.fecha }}
+                                        {% if form.fecha.errors %}
+                                            <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.duracion.id_for_label }}" class="form-label">
+                                            {{ form.duracion.label }}
+                                        </label>
+                                        {{ form.duracion }}
+                                        {% if form.duracion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.duracion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Ejemplo: 2 horas, 90 minutos</div>
+                                    </div>
+                                </div>
+
+                                <!-- Lugar -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.lugar.id_for_label }}" class="form-label">
+                                            {{ form.lugar.label }}
+                                        </label>
+                                        {{ form.lugar }}
+                                        {% if form.lugar.errors %}
+                                            <div class="text-danger small mt-1">{{ form.lugar.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Dirección o lugar donde se realizará</div>
+                                    </div>
+                                </div>
+
+                                <!-- Evaluación -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.evaluacion.id_for_label }}" class="form-label">
+                                            {{ form.evaluacion.label }}
+                                        </label>
+                                        {{ form.evaluacion }}
+                                        {% if form.evaluacion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.evaluacion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Valoración del 1 al 5 (⭐⭐⭐⭐⭐)</div>
+                                    </div>
+                                </div>
+
+                                <!-- Observaciones -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                            {{ form.observaciones.label }}
+                                        </label>
+                                        {{ form.observaciones }}
+                                        {% if form.observaciones.errors %}
+                                            <div class="text-danger small mt-1">{{ form.observaciones.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Notas adicionales sobre el evento</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel lateral -->
+                    <div class="col-md-4">
+                        <!-- Información del evento -->
+                        <div class="card info-card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">ℹ️ Información del Evento</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Creado:</strong> {{ object.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                                <p><strong>Modificado:</strong> {{ object.fecha_modificacion|date:"d/m/Y H:i" }}</p>
+                                <p><strong>ID:</strong> #{{ object.pk }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Vista previa -->
+                        <div class="card preview-card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">👁️ Vista Previa</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview-content">
+                                    <h6 id="preview-nombre">{{ object.nombre }}</h6>
+                                    <p id="preview-fecha" class="text-muted">📅 {{ object.fecha|date:"d/m/Y H:i" }}</p>
+                                    <p id="preview-lugar" class="text-muted">📍 {{ object.lugar|default:"Lugar por definir" }}</p>
+                                    {% if object.evaluacion %}
+                                    <p id="preview-evaluacion" class="text-muted">
+                                        ⭐ {{ object.evaluacion }}/5
+                                    </p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acciones rápidas -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">⚡ Acciones Rápidas</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'eventos:delete' object.pk %}"
+                                       class="btn btn-outline-danger btn-sm"
+                                       onclick="return confirm('¿Estás seguro de eliminar este evento?')">
+                                        🗑️ Eliminar Evento
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="duplicateEvent()">
+                                        📋 Duplicar Evento
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-warning btn-submit">
+                                    ✏️ Actualizar Evento
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar campos de fecha
+    const fechaInput = document.getElementById('{{ form.fecha.id_for_label }}');
+    if (fechaInput) {
+        fechaInput.type = 'datetime-local';
+        fechaInput.classList.add('form-control');
+
+        // Convertir valor existente al formato datetime-local
+        const currentValue = fechaInput.value;
+        if (currentValue) {
+            const date = new Date(currentValue);
+            if (!isNaN(date.getTime())) {
+                const isoString = date.toISOString();
+                fechaInput.value = isoString.slice(0, 16);
+            }
+        }
+    }
+
+    // Configurar otros campos
+    const evaluacionInput = document.getElementById('{{ form.evaluacion.id_for_label }}');
+    if (evaluacionInput) {
+        evaluacionInput.type = 'number';
+        evaluacionInput.min = '1';
+        evaluacionInput.max = '5';
+        evaluacionInput.classList.add('form-control');
+    }
+
+    // Añadir clases CSS a todos los campos del formulario
+    const formControls = ['nombre', 'descripcion', 'duracion', 'lugar', 'observaciones'];
+    formControls.forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.classList.add('form-control');
+            if (fieldName === 'descripcion' || fieldName === 'observaciones') {
+                field.rows = 3;
+            }
+        }
+    });
+
+    // Vista previa dinámica
+    function updatePreview() {
+        const nombre = document.getElementById('id_nombre').value || 'Nombre del evento';
+        const fecha = document.getElementById('id_fecha').value;
+        const lugar = document.getElementById('id_lugar').value || 'Lugar por definir';
+        const evaluacion = document.getElementById('id_evaluacion').value;
+
+        document.getElementById('preview-nombre').textContent = nombre;
+
+        if (fecha) {
+            const fechaObj = new Date(fecha);
+            const fechaFormat = fechaObj.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('preview-fecha').innerHTML = '📅 ' + fechaFormat;
+        }
+
+        document.getElementById('preview-lugar').innerHTML = '📍 ' + lugar;
+
+        if (evaluacion) {
+            let evaluacionElement = document.getElementById('preview-evaluacion');
+            if (!evaluacionElement) {
+                evaluacionElement = document.createElement('p');
+                evaluacionElement.id = 'preview-evaluacion';
+                evaluacionElement.className = 'text-muted';
+                document.getElementById('preview-content').appendChild(evaluacionElement);
+            }
+            evaluacionElement.innerHTML = '⭐ ' + evaluacion + '/5';
+        }
+    }
+
+    // Escuchar cambios en los campos para actualizar vista previa
+    ['nombre', 'fecha', 'lugar', 'evaluacion'].forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+
+    // Actualizar vista previa inicial
+    updatePreview();
+});
+</script>
+{% endblock %}

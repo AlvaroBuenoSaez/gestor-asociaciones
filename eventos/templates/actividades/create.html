@@ -1,0 +1,320 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Nuevo Evento - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+    .btn-submit {
+        min-width: 150px;
+    }
+    .preview-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary me-3">
+                    ← Volver
+                </a>
+                <div>
+                    <h2>🎯 Nuevo Evento</h2>
+                    <p class="text-muted mb-0">Crear una nueva actividad para {{ asociacion.nombre }}</p>
+                </div>
+            </div>
+
+
+
+            <form method="post" id="eventoForm">
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- Formulario principal -->
+                    <div class="col-md-8">
+                        <div class="card form-card">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">📝 Datos del Evento</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Información básica -->
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label for="{{ form.nombre.id_for_label }}" class="form-label">
+                                            {{ form.nombre.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.nombre }}
+                                        {% if form.nombre.errors %}
+                                            <div class="text-danger small mt-1">{{ form.nombre.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.responsable.id_for_label }}" class="form-label">
+                                            {{ form.responsable.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.responsable }}
+                                        {% if form.responsable.errors %}
+                                            <div class="text-danger small mt-1">{{ form.responsable.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Socia responsable del evento</div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                            {{ form.descripcion.label }}
+                                        </label>
+                                        {{ form.descripcion }}
+                                        {% if form.descripcion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Describe brevemente el evento</div>
+                                    </div>
+                                </div>
+
+                                <!-- Fecha y duración -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.fecha.id_for_label }}" class="form-label">
+                                            {{ form.fecha.label }} <span class="required">*</span>
+                                        </label>
+                                        {{ form.fecha }}
+                                        {% if form.fecha.errors %}
+                                            <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.duracion.id_for_label }}" class="form-label">
+                                            {{ form.duracion.label }}
+                                        </label>
+                                        {{ form.duracion }}
+                                        {% if form.duracion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.duracion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Ejemplo: 2 horas, 90 minutos</div>
+                                    </div>
+                                </div>
+
+                                <!-- Lugar -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.lugar.id_for_label }}" class="form-label">
+                                            {{ form.lugar.label }}
+                                        </label>
+                                        {{ form.lugar }}
+                                        {% if form.lugar.errors %}
+                                            <div class="text-danger small mt-1">{{ form.lugar.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Dirección o lugar donde se realizará</div>
+                                    </div>
+                                </div>
+
+                                <!-- Evaluación -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.evaluacion.id_for_label }}" class="form-label">
+                                            {{ form.evaluacion.label }}
+                                        </label>
+                                        {{ form.evaluacion }}
+                                        {% if form.evaluacion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.evaluacion.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Valoración del 1 al 5 (⭐⭐⭐⭐⭐)</div>
+                                    </div>
+                                </div>
+
+                                <!-- Observaciones -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.observaciones.id_for_label }}" class="form-label">
+                                            {{ form.observaciones.label }}
+                                        </label>
+                                        {{ form.observaciones }}
+                                        {% if form.observaciones.errors %}
+                                            <div class="text-danger small mt-1">{{ form.observaciones.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Notas adicionales sobre el evento</div>
+                                    </div>
+                                </div>
+
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel lateral -->
+                    <div class="col-md-4">
+                        <!-- Vista previa -->
+                        <div class="card preview-card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">👁️ Vista Previa</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview-content">
+                                    <h6 id="preview-nombre">Nombre del evento</h6>
+                                    <p id="preview-fecha" class="text-muted">📅 Fecha por definir</p>
+                                    <p id="preview-lugar" class="text-muted">📍 Lugar por definir</p>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Consejos -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">💡 Consejos</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="small text-muted mb-0">
+                                    <li>Usa nombres descriptivos y atractivos</li>
+                                    <li>Especifica claramente fecha y hora</li>
+                                    <li>Incluye direcciones completas</li>
+                                    <li>Registra evaluaciones para mejorar</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-primary btn-submit me-2">
+                                    💾 Guardar Evento
+                                </button>
+                                <button type="button" class="btn btn-success" onclick="submitAndContinue()">
+                                    💾➕ Guardar y Crear Otro
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar campos de fecha
+    const fechaInput = document.getElementById('{{ form.fecha.id_for_label }}');
+    if (fechaInput) {
+        fechaInput.type = 'datetime-local';
+        fechaInput.classList.add('form-control');
+    }
+
+    const evaluacionInput = document.getElementById('{{ form.evaluacion.id_for_label }}');
+    if (evaluacionInput) {
+        evaluacionInput.type = 'number';
+        evaluacionInput.min = '1';
+        evaluacionInput.max = '5';
+        evaluacionInput.classList.add('form-control');
+    }
+
+    // Añadir clases CSS a todos los campos del formulario
+    const formControls = ['nombre', 'descripcion', 'duracion', 'lugar', 'observaciones'];
+    formControls.forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.classList.add('form-control');
+            if (fieldName === 'descripcion' || fieldName === 'observaciones') {
+                field.rows = 3;
+            }
+        }
+    });
+
+    // Vista previa dinámica
+    function updatePreview() {
+        const nombre = document.getElementById('id_nombre').value || 'Nombre del evento';
+        const fecha = document.getElementById('id_fecha').value;
+        const lugar = document.getElementById('id_lugar').value || 'Lugar por definir';
+
+        document.getElementById('preview-nombre').textContent = nombre;
+
+        if (fecha) {
+            const fechaObj = new Date(fecha);
+            const fechaFormat = fechaObj.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('preview-fecha').innerHTML = '📅 ' + fechaFormat;
+        } else {
+            document.getElementById('preview-fecha').innerHTML = '📅 Fecha por definir';
+        }
+
+        document.getElementById('preview-lugar').innerHTML = '📍 ' + lugar;
+    }
+
+    // Escuchar cambios en los campos para actualizar vista previa
+    ['nombre', 'fecha', 'lugar'].forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+        }
+    });
+
+});
+
+function submitAndContinue() {
+    const form = document.getElementById('eventoForm');
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'save_and_continue';
+    input.value = 'true';
+    form.appendChild(input);
+    form.submit();
+}
+
+// Validación del formulario
+document.getElementById('eventoForm').addEventListener('submit', function(e) {
+    const nombre = document.getElementById('id_nombre').value.trim();
+    const fecha = document.getElementById('id_fecha').value;
+
+    if (!nombre) {
+        e.preventDefault();
+        alert('El nombre del evento es obligatorio');
+        document.getElementById('id_nombre').focus();
+        return;
+    }
+
+    if (!fecha) {
+        e.preventDefault();
+        alert('La fecha del evento es obligatoria');
+        document.getElementById('id_fecha').focus();
+        return;
+    }
+});
+</script>
+{% endblock %}
