@@ -30,42 +30,4 @@ class Migration(migrations.Migration):
                 'ordering': ['apellidos', 'nombre'],
             },
         ),
-        migrations.AlterModelOptions(
-            name='participanteevento',
-            options={'ordering': ['socia__apellidos', 'persona_externa__apellidos'], 'verbose_name': 'Participante de Evento', 'verbose_name_plural': 'Participantes de Eventos'},
-        ),
-        migrations.RemoveField(
-            model_name='participanteevento',
-            name='apellidos',
-        ),
-        migrations.RemoveField(
-            model_name='participanteevento',
-            name='email',
-        ),
-        migrations.RemoveField(
-            model_name='participanteevento',
-            name='nombre',
-        ),
-        migrations.RemoveField(
-            model_name='participanteevento',
-            name='telefono',
-        ),
-        migrations.AlterField(
-            model_name='participanteevento',
-            name='socia',
-            field=models.ForeignKey(blank=True, help_text='Si el participante es una socia, selecciónala aquí', null=True, on_delete=django.db.models.deletion.CASCADE, to='socias.socia'),
-        ),
-        migrations.AddField(
-            model_name='participanteevento',
-            name='persona_externa',
-            field=models.ForeignKey(blank=True, help_text='Si el participante es una persona externa, selecciónala aquí', null=True, on_delete=django.db.models.deletion.CASCADE, to='eventos.personaexterna'),
-        ),
-        migrations.AddConstraint(
-            model_name='participanteevento',
-            constraint=models.CheckConstraint(condition=models.Q(('socia__isnull', False), ('persona_externa__isnull', False), _connector='OR'), name='participante_debe_tener_socia_o_persona_externa'),
-        ),
-        migrations.AddConstraint(
-            model_name='participanteevento',
-            constraint=models.CheckConstraint(condition=models.Q(('socia__isnull', False), ('persona_externa__isnull', False), _negated=True), name='participante_no_puede_ser_socia_y_externa'),
-        ),
     ]

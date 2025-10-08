@@ -20,7 +20,7 @@ Este repositorio contiene una API / aplicación Django. El archivo `requirements
 1) Clonar el repositorio (si procede)
 
 ```bash
-git clone <url-del-repositorio> gestor-asociaciones
+git clone https://github.com/AlvaroBuenoSaez/gestor-asociaciones.git
 cd gestor-asociaciones
 ```
 
