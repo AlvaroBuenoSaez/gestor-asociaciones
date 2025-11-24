@@ -1,0 +1,69 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Dashboard - {{ asociacion.nombre }}{% endblock %}
+
+{% block dashboard_content %}
+<div class="row">
+    <div class="col-12">
+        <h1>Bienvenido a {{ asociacion.nombre }}</h1>
+        <p class="text-muted">Tu rol: <strong>{{ is_admin|yesno:"Administrador,Miembro" }}</strong></p>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3>{{ total_members }}</h3>
+                <p>Miembros</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3>-</h3>
+                <p>Actividades</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3>-</h3>
+                <p>Balance</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3>-</h3>
+                <p>Mapas</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <h3>Accesos rápidos</h3>
+        <div class="list-group">
+            <a href="{% url 'socias:list' %}" class="list-group-item list-group-item-action">
+                👥 Gestionar Socias
+            </a>
+            <a href="{% url 'finanzas:dashboard' %}" class="list-group-item list-group-item-action">
+                💰 Ver Contabilidad
+            </a>
+            <a href="{% url 'eventos:list' %}" class="list-group-item list-group-item-action">
+                🎯 Ver Actividades
+            </a>
+            {% if is_admin %}
+            <a href="{% url 'users:usuarios_web' %}" class="list-group-item list-group-item-action">
+                ⚙️ Gestionar Usuarios Web
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

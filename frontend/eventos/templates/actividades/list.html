@@ -1,0 +1,227 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Actividades - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>🎯 Gestión de Actividades</h2>
+                    <p class="text-muted">Administra los eventos de {{ asociacion.nombre }}</p>
+                </div>
+                {% if is_admin %}
+                <div class="btn-group" role="group">
+                    <a href="{% url 'eventos:create' %}" class="btn btn-primary">
+                        ➕ Nuevo Evento
+                    </a>
+                    <a href="{% url 'eventos:mapas' %}" class="btn btn-outline-info">
+                        🗺️ Ver Mapas
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Formulario de búsqueda y filtros -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <form method="get" id="searchForm">
+                        <div class="row align-items-end">
+                            <div class="col-md-4">
+                                <label for="search" class="form-label">🔍 Buscar</label>
+                                <input type="text"
+                                       class="form-control"
+                                       id="search"
+                                       name="search"
+                                       value="{{ current_search }}"
+                                       placeholder="Nombre, descripción, lugar, colaboradores..."
+                                       onchange="document.getElementById('searchForm').submit();">
+                            </div>
+                            <div class="col-md-2">
+                                <label for="year" class="form-label">📅 Año</label>
+                                <select class="form-select" id="year" name="year" onchange="document.getElementById('searchForm').submit();">
+                                    <option value="">Todos</option>
+                                    {% for year in years %}
+                                    <option value="{{ year }}" {% if current_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="order" class="form-label">🔄 Ordenar</label>
+                                <select class="form-select" id="order" name="order" onchange="document.getElementById('searchForm').submit();">
+                                    <option value="fecha" {% if current_order == 'fecha' %}selected{% endif %}>Fecha ↑</option>
+                                    <option value="-fecha" {% if current_order == '-fecha' %}selected{% endif %}>Fecha ↓</option>
+                                    <option value="nombre" {% if current_order == 'nombre' %}selected{% endif %}>Nombre ↑</option>
+                                    <option value="-nombre" {% if current_order == '-nombre' %}selected{% endif %}>Nombre ↓</option>
+                                    <option value="-evaluacion" {% if current_order == '-evaluacion' %}selected{% endif %}>Evaluación ↓</option>
+                                    <option value="evaluacion" {% if current_order == 'evaluacion' %}selected{% endif %}>Evaluación ↑</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary" title="Limpiar filtros">
+                                    🗑️ Limpiar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Estadísticas de eventos -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h4>{{ total_eventos|default:0 }}</h4>
+                            <p>Total Eventos</p>
+                            {% if filtered_count != total_eventos %}
+                                <small>({{ filtered_count }} filtrados)</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h4>{{ eventos_evaluados|default:0 }}</h4>
+                            <p>Evaluados</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h4>{{ promedio_evaluacion|default:0 }}/5⭐</h4>
+                            <p>Promedio</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de eventos -->
+            {% if eventos %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Responsable</th>
+                                    <th>Fecha</th>
+                                    <th>Lugar</th>
+                                    <th>Evaluación</th>
+                                    {% if is_admin %}
+                                    <th>Acciones</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for evento in eventos %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ evento.nombre }}</strong>
+                                        {% if evento.descripcion %}
+                                            <br><small class="text-muted">{{ evento.descripcion|truncatechars:50 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if evento.responsable %}
+                                            <strong>{{ evento.responsable.nombre }} {{ evento.responsable.apellidos }}</strong>
+                                            <br><small class="text-muted">Socia #{{ evento.responsable.numero_socia }}</small>
+                                        {% else %}
+                                            <span class="text-muted">Sin asignar</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ evento.fecha|date:"d/m/Y H:i" }}
+                                        {% if evento.duracion %}
+                                            <br><small class="text-muted">Duración: {{ evento.duracion }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ evento.lugar|default:"-" }}</td>
+                                    <td>
+                                        {% if evento.evaluacion %}
+                                            {% for i in "12345" %}
+                                                {% if forloop.counter <= evento.evaluacion %}
+                                                    ⭐
+                                                {% else %}
+                                                    ☆
+                                                {% endif %}
+                                            {% endfor %}
+                                            <br><small class="text-muted">{{ evento.evaluacion }}/5</small>
+                                        {% else %}
+                                            <span class="text-muted">Sin evaluar</span>
+                                        {% endif %}
+                                    </td>
+                                    {% if is_admin %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'eventos:edit' evento.pk %}"
+                                               class="btn btn-outline-warning" title="Editar">
+                                                ✏️
+                                            </a>
+                                            <a href="{% url 'eventos:delete' evento.pk %}"
+                                               class="btn btn-outline-danger" title="Eliminar">
+                                                🗑️
+                                            </a>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paginación -->
+            {% if is_paginated %}
+            <nav aria-label="Paginación de eventos" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_year %}&year={{ current_year }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}">Primera</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_year %}&year={{ current_year }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}">Anterior</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">{{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_year %}&year={{ current_year }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}">Siguiente</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_year %}&year={{ current_year }}{% endif %}{% if current_order %}&order={{ current_order }}{% endif %}">Última</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+            {% else %}
+            <!-- Sin eventos -->
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <h4>🎯 No hay eventos registrados</h4>
+                    <p class="text-muted">Comienza creando el primer evento de tu asociación.</p>
+                    {% if is_admin %}
+                    <a href="{% url 'eventos:create' %}" class="btn btn-primary">
+                        ➕ Crear Primer Evento
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

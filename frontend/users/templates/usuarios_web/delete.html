@@ -1,0 +1,125 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Eliminar Usuario - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'users:usuarios_web' %}" class="btn btn-outline-secondary me-3">
+                    <i class="bi bi-arrow-left"></i> Volver
+                </a>
+                <div>
+                    <h2>🗑️ Eliminar Usuario</h2>
+                    <p class="text-muted mb-0">Confirmación de eliminación</p>
+                </div>
+            </div>
+
+            <!-- Confirmación -->
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle"></i> ¡Atención!
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Información del usuario -->
+                    <div class="alert alert-light border">
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <i class="bi bi-person-circle" style="font-size: 3rem; color: #6c757d;"></i>
+                                </div>
+                            </div>
+                            <div class="col-8">
+                                <h6 class="mb-2">{{ user_obj.get_full_name|default:user_obj.username }}</h6>
+                                <div class="small text-muted">
+                                    <div><strong>Usuario:</strong> {{ user_obj.username }}</div>
+                                    {% if user_obj.email %}
+                                        <div><strong>Email:</strong> {{ user_obj.email }}</div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>Rol:</strong>
+                                        {% if user_obj.profile.role == 'admin' %}
+                                            <span class="badge bg-primary">Administrador</span>
+                                        {% else %}
+                                            <span class="badge bg-info">Miembro</span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>Registrado:</strong> {{ user_obj.date_joined|date:"d/m/Y" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advertencia -->
+                    <div class="alert alert-danger d-flex align-items-start">
+                        <i class="bi bi-exclamation-triangle-fill me-2 mt-1"></i>
+                        <div>
+                            <h6 class="alert-heading">Esta acción no se puede deshacer</h6>
+                            <p class="mb-2">Al eliminar este usuario:</p>
+                            <ul class="mb-0">
+                                <li>Perderá acceso inmediato a la plataforma</li>
+                                <li>Se eliminarán todos sus datos de perfil</li>
+                                <li>No podrá recuperar su historial de actividad</li>
+                                <li>Deberás crear un nuevo usuario si quiere volver a acceder</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de confirmación -->
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirm_delete" required>
+                                <label class="form-check-label" for="confirm_delete">
+                                    <strong>Confirmo que quiero eliminar este usuario</strong>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'users:usuarios_web' %}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="delete_button" disabled>
+                                <i class="bi bi-trash"></i> Eliminar Usuario
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Alternativa -->
+            <div class="card mt-3 border-warning">
+                <div class="card-body">
+                    <h6 class="card-title text-warning">
+                        <i class="bi bi-lightbulb"></i> ¿Consideras otras opciones?
+                    </h6>
+                    <p class="card-text small">
+                        En lugar de eliminar el usuario, puedes <strong>desactivarlo</strong> para que no pueda acceder,
+                        pero conserve sus datos para el futuro.
+                    </p>
+                    <a href="{% url 'users:editar_usuario_web' user_obj.id %}" class="btn btn-warning btn-sm">
+                        <i class="bi bi-person-gear"></i> Editar Usuario
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Habilitar botón de eliminar solo cuando se confirme
+document.getElementById('confirm_delete').addEventListener('change', function() {
+    document.getElementById('delete_button').disabled = !this.checked;
+});
+</script>
+{% endblock %}

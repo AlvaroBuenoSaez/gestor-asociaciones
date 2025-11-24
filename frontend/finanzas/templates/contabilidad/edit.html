@@ -1,0 +1,373 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Editar Transacción - Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+    .form-control:focus {
+        border-color: #ffc107;
+        box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+    }
+    .btn-submit {
+        min-width: 150px;
+    }
+    .preview-card {
+        background-color: #f8f9fa;
+        border-left: 4px solid #ffc107;
+    }
+    .info-card {
+        background-color: #e7f3ff;
+        border-left: 4px solid #007bff;
+    }
+    .amount-input {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    .ingreso {
+        color: #28a745;
+    }
+    .gasto {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'finanzas:list' %}" class="btn btn-outline-secondary me-3">
+                    ← Volver a Contabilidad
+                </a>
+                <div>
+                    <h2>✏️ Editar Transacción</h2>
+                    <p class="text-muted mb-0">Modificar transacción de {{ asociacion.nombre }}</p>
+                </div>
+            </div>
+
+
+
+            <form method="post" id="transaccionForm" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="row">
+                    <!-- Formulario principal -->
+                    <div class="col-md-8">
+                        <div class="card form-card">
+                            <div class="card-header bg-warning text-dark">
+                                <h5 class="mb-0">💰 Datos de la Transacción</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Tipo y concepto -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.concepto.id_for_label }}" class="form-label">
+                                            Concepto <span class="required">*</span>
+                                        </label>
+                                        {{ form.concepto }}
+                                        {% if form.concepto.errors %}
+                                            <div class="text-danger small mt-1">{{ form.concepto.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Importe y fecha -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.cantidad.id_for_label }}" class="form-label">
+                                            Cantidad <span class="required">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text">€</span>
+                                            {{ form.cantidad }}
+                                        </div>
+                                        <small class="form-text text-muted">Positivo para ingresos, negativo para gastos</small>
+                                        {% if form.cantidad.errors %}
+                                            <div class="text-danger small mt-1">{{ form.cantidad.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.fecha_transaccion.id_for_label }}" class="form-label">
+                                            Fecha de Transacción <span class="required">*</span>
+                                        </label>
+                                        {{ form.fecha_transaccion }}
+                                        {% if form.fecha_transaccion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.fecha_transaccion.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Descripción -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.descripcion.id_for_label }}" class="form-label">
+                                            Descripción
+                                        </label>
+                                        {{ form.descripcion }}
+                                        {% if form.descripcion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.descripcion.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Relaciones -->
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.evento.id_for_label }}" class="form-label">
+                                            Evento Relacionado
+                                        </label>
+                                        {{ form.evento }}
+                                        {% if form.evento.errors %}
+                                            <div class="text-danger small mt-1">{{ form.evento.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="{{ form.entidad.id_for_label }}" class="form-label">
+                                            Entidad
+                                        </label>
+                                        {{ form.entidad }}
+                                        {% if form.entidad.errors %}
+                                            <div class="text-danger small mt-1">{{ form.entidad.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Comprobante -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label for="comprobante" class="form-label">
+                                            Comprobante (Google Drive)
+                                        </label>
+                                        {% if object.drive_file_link %}
+                                            <div class="mb-2">
+                                                <a href="{{ object.drive_file_link }}" target="_blank" class="btn btn-sm btn-info">
+                                                    <i class="fas fa-file-alt"></i> Ver Comprobante Actual
+                                                </a>
+                                                <small class="text-muted ms-2">{{ object.drive_file_name }}</small>
+                                            </div>
+                                        {% endif %}
+                                        <input type="file" name="comprobante" id="comprobante" class="form-control">
+                                        <div class="form-text">Subir un nuevo archivo reemplazará el anterior si existe.</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Panel lateral -->
+                    <div class="col-md-4">
+                        <!-- Información de la transacción -->
+                        <div class="card info-card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">ℹ️ Información de la Transacción</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Tipo actual:</strong>
+                                    <span class="{{ object.tipo|lower }}">
+                                        {% if object.tipo == 'INGRESO' %}💰{% else %}💸{% endif %} {{ object.get_tipo_display }}
+                                    </span>
+                                </p>
+                                <p><strong>Importe actual:</strong>
+                                    <span class="{{ object.tipo|lower }}">{{ object.importe }}€</span>
+                                </p>
+                                <p><strong>Creado:</strong> {{ object.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                                <p><strong>Modificado:</strong> {{ object.fecha_modificacion|date:"d/m/Y H:i" }}</p>
+                                <p><strong>ID:</strong> #{{ object.pk }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Vista previa -->
+                        <div class="card preview-card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">👁️ Vista Previa</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="preview-content">
+                                    <h6 id="preview-concepto">{{ object.concepto }}</h6>
+                                    <p id="preview-tipo" class="{{ object.tipo|lower }}">
+                                        {% if object.tipo == 'INGRESO' %}💰{% else %}💸{% endif %} {{ object.get_tipo_display }}
+                                    </p>
+                                    <p id="preview-importe" class="{{ object.tipo|lower }}">{{ object.importe }}€</p>
+                                    <p id="preview-fecha" class="text-muted">📅 {{ object.fecha|date:"d/m/Y" }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Acciones rápidas -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">⚡ Acciones Rápidas</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="{% url 'finanzas:delete' object.pk %}"
+                                       class="btn btn-outline-danger btn-sm"
+                                       onclick="return confirm('¿Estás seguro de eliminar esta transacción?')">
+                                        🗑️ Eliminar Transacción
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info btn-sm" onclick="duplicateTransaction()">
+                                        📋 Duplicar Transacción
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'finanzas:list' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+                            <div>
+                                <button type="submit" class="btn btn-warning btn-submit">
+                                    ✏️ Actualizar Transacción
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Configurar campo de fecha
+    const fechaInput = document.getElementById('{{ form.fecha_transaccion.id_for_label }}');
+    if (fechaInput) {
+        fechaInput.type = 'date';
+        fechaInput.classList.add('form-control');
+    }
+
+    // Configurar campo de importe
+    const importeInput = document.getElementById('{{ form.cantidad.id_for_label }}');
+    if (importeInput) {
+        importeInput.type = 'number';
+        importeInput.step = '0.01';
+        importeInput.classList.add('form-control', 'amount-input');
+    }
+
+    // Añadir clases CSS a todos los campos del formulario
+    const formControls = ['concepto', 'descripcion', 'evento', 'entidad', 'comprobante'];
+    formControls.forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.classList.add('form-control');
+            if (fieldName === 'descripcion') {
+                field.rows = 3;
+            }
+        }
+    });
+
+    // Vista previa dinámica
+    function updatePreview() {
+        const concepto = document.getElementById('id_concepto').value || 'Concepto';
+        const importe = document.getElementById('id_cantidad').value || '0.00';
+        const fecha = document.getElementById('id_fecha_transaccion').value;
+
+        const cantidad = parseFloat(importe);
+        const tipo = cantidad >= 0 ? 'INGRESO' : 'GASTO';
+
+        document.getElementById('preview-concepto').textContent = concepto;
+
+        // Actualizar tipo con icono
+        const tipoElement = document.getElementById('preview-tipo');
+        const icon = tipo === 'INGRESO' ? '💰' : '💸';
+        const displayType = tipo === 'INGRESO' ? 'Ingreso' : 'Gasto';
+        tipoElement.innerHTML = icon + ' ' + displayType;
+        tipoElement.className = tipo.toLowerCase();
+
+        // Actualizar importe con estilo
+        const importeElement = document.getElementById('preview-importe');
+        importeElement.textContent = Math.abs(cantidad).toFixed(2) + '€';
+        importeElement.className = tipo.toLowerCase();
+
+        // Actualizar fecha
+        if (fecha) {
+            const fechaObj = new Date(fecha);
+            const fechaFormat = fechaObj.toLocaleDateString('es-ES');
+            document.getElementById('preview-fecha').innerHTML = '📅 ' + fechaFormat;
+        }
+    }
+
+    // Escuchar cambios en los campos para actualizar vista previa
+    ['concepto', 'cantidad', 'fecha_transaccion'].forEach(function(fieldName) {
+        const field = document.getElementById('id_' + fieldName);
+        if (field) {
+            field.addEventListener('input', updatePreview);
+            field.addEventListener('change', updatePreview);
+        }
+    });
+
+    // Actualizar vista previa inicial
+    updatePreview();
+});
+
+function duplicateTransaction() {
+    const currentUrl = window.location.href;
+    const createUrl = "{% url 'finanzas:create' %}";
+
+    // Recopilar datos del formulario actual
+    const formData = new FormData(document.getElementById('transaccionForm'));
+    const params = new URLSearchParams();
+
+    // Añadir prefijo "duplicate_" a los nombres para identificarlos
+    for (const [key, value] of formData.entries()) {
+        if (key !== 'csrfmiddlewaretoken') {
+            params.append('duplicate_' + key, value);
+        }
+    }
+
+    // Redirigir a create con datos para duplicar
+    window.location.href = createUrl + '?' + params.toString();
+}
+
+// Validación del formulario
+document.getElementById('transaccionForm').addEventListener('submit', function(e) {
+    const concepto = document.getElementById('id_concepto').value.trim();
+    const importe = document.getElementById('id_cantidad').value;
+    const fecha = document.getElementById('id_fecha_transaccion').value;
+
+    if (!concepto) {
+        e.preventDefault();
+        alert('El concepto es obligatorio');
+        document.getElementById('id_concepto').focus();
+        return;
+    }
+
+    if (!importe) {
+        e.preventDefault();
+        alert('La cantidad es obligatoria');
+        document.getElementById('id_cantidad').focus();
+        return;
+    }
+
+    if (!fecha) {
+        e.preventDefault();
+        alert('La fecha es obligatoria');
+        document.getElementById('id_fecha_transaccion').focus();
+        return;
+    }
+});
+</script>
+{% endblock %}

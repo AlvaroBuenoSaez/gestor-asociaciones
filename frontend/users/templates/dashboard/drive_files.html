@@ -1,0 +1,80 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Documentos en Google Drive</h1>
+        <a href="{% url 'users:drive_config' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-cog fa-sm text-white-50"></i> Configurar Carpeta
+        </a>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Subir Archivo</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="form-inline">
+                {% csrf_token %}
+                <div class="form-group mx-sm-3 mb-2">
+                    <input type="file" name="file" class="form-control-file" required>
+                </div>
+                <button type="submit" class="btn btn-primary mb-2">Subir</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Files List -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Archivos</h6>
+        </div>
+        <div class="card-body">
+            {% if not asociacion.drive_folder_id %}
+            <div class="alert alert-warning">
+                No se ha configurado una carpeta de Drive. <a href="{% url 'users:drive_config' %}">Configurar ahora</a>.
+            </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for file in files %}
+                            <tr>
+                                <td>
+                                    <a href="{{ file.webViewLink }}" target="_blank">
+                                        <img src="{{ file.iconLink }}" alt="" class="mr-2">
+                                        {{ file.name }}
+                                    </a>
+                                </td>
+                                <td>{{ file.createdTime|date:"d/m/Y H:i" }}</td>
+                                <td>
+                                    <form method="post" style="display:inline;" onsubmit="return confirm('¿Estás seguro de eliminar este archivo?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="delete_file_id" value="{{ file.id }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="text-center">No hay archivos en esta carpeta.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

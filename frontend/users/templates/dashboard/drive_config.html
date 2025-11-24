@@ -1,0 +1,102 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Configuración de Google Drive</h1>
+        <a href="{% url 'users:dashboard' %}" class="btn btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 mr-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Seleccionar Carpeta Base</h6>
+        </div>
+        <div class="card-body">
+            {% if not is_connected %}
+                <div class="text-center py-5">
+                    <i class="fab fa-google-drive fa-4x text-gray-300 mb-3"></i>
+                    <h4 class="text-gray-800 mb-2">Conectar con Google Drive</h4>
+                    <p class="mb-4">Para gestionar los documentos de la asociación, primero debes conectar una cuenta de Google.</p>
+                    {% if auth_url %}
+                        <a href="{{ auth_url }}" class="btn btn-primary btn-lg">
+                            <i class="fab fa-google mr-2"></i> Conectar Cuenta
+                        </a>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            No se pudo obtener la URL de autorización. Verifica la configuración del servidor.
+                        </div>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card border-left-success shadow h-100 py-2">
+                            <div class="card-body">
+                                <div class="row no-gutters align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                            Opción Recomendada</div>
+                                        <div class="h5 mb-0 font-weight-bold text-gray-800">Crear Nueva Carpeta</div>
+                                        <p class="mb-0 mt-2">Crea una carpeta dedicada en tu Drive para guardar los archivos de la asociación.</p>
+                                    </div>
+                                    <div class="col-auto">
+                                        <form method="post" class="form-inline">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="create_folder" value="true">
+                                            <div class="form-group mx-sm-3 mb-2">
+                                                <label for="folder_name" class="sr-only">Nombre de la Carpeta</label>
+                                                <input type="text" class="form-control" id="folder_name" name="folder_name" value="Gestor Asociaciones" placeholder="Nombre de la carpeta">
+                                            </div>
+                                            <button type="submit" class="btn btn-success mb-2">
+                                                <i class="fas fa-plus-circle mr-2"></i> Crear
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <p>O selecciona una carpeta existente (solo si fue creada por esta aplicación):</p>
+
+                {% if asociacion.drive_folder_id %}
+                <div class="alert alert-info">
+                    <strong>Carpeta Configurada (ID):</strong> {{ asociacion.drive_folder_id }}
+                    <br>
+                    <small class="text-muted">Este es el identificador único de Google Drive, no el nombre.</small>
+                    {% if folder_link %}
+                        <br>
+                        <a href="{{ folder_link }}" target="_blank" class="btn btn-info btn-sm mt-2">
+                            <i class="fab fa-google-drive"></i> Abrir en Google Drive
+                        </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="list-group">
+                        {% for folder in folders %}
+                        <button type="submit" name="folder_id" value="{{ folder.id }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-folder text-warning mr-2"></i> {{ folder.name }}</span>
+                            {% if folder.id == asociacion.drive_folder_id %}
+                            <span class="badge badge-primary badge-pill">Seleccionada</span>
+                            {% endif %}
+                        </button>
+                        {% empty %}
+                        <div class="alert alert-warning">
+                            No se encontraron carpetas accesibles. Usa la opción de "Crear Nueva Carpeta" arriba.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
