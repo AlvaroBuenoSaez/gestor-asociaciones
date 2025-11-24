@@ -1,0 +1,144 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Nueva Transacción - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>➕ Nueva Transacción</h2>
+                <a href="{% url 'finanzas:dashboard' %}" class="btn btn-outline-secondary">
+                    ← Volver a Contabilidad
+                </a>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Información financiera -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">💰 Información Financiera</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.cantidad.id_for_label }}" class="form-label">Cantidad *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">€</span>
+                                    {{ form.cantidad }}
+                                </div>
+                                <small class="form-text text-muted">Positivo para ingresos, negativo para gastos</small>
+                                {% if form.cantidad.errors %}
+                                    <div class="text-danger">{{ form.cantidad.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-8">
+                                <label for="{{ form.concepto.id_for_label }}" class="form-label">Concepto *</label>
+                                {{ form.concepto }}
+                                {% if form.concepto.errors %}
+                                    <div class="text-danger">{{ form.concepto.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-12 mt-3">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción</label>
+                                {{ form.descripcion }}
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">📅 Fechas</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_transaccion.id_for_label }}" class="form-label">Fecha de Transacción *</label>
+                                {{ form.fecha_transaccion }}
+                                {% if form.fecha_transaccion.errors %}
+                                    <div class="text-danger">{{ form.fecha_transaccion.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.fecha_vencimiento.id_for_label }}" class="form-label">Fecha de Vencimiento</label>
+                                {{ form.fecha_vencimiento }}
+                                <small class="form-text text-muted">Solo para facturas o pagos pendientes</small>
+                            </div>
+                        </div>
+
+                        <!-- Relaciones -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">🔗 Relaciones</h5>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.evento.id_for_label }}" class="form-label">Evento Relacionado</label>
+                                {{ form.evento }}
+                                <small class="form-text text-muted">Si está relacionado con algún evento</small>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="{{ form.entidad.id_for_label }}" class="form-label">Entidad</label>
+                                {{ form.entidad }}
+                                <small class="form-text text-muted">Banco, proveedor, institución, etc.</small>
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <button type="submit" class="btn btn-primary">
+                                    💾 Registrar Transacción
+                                </button>
+                                <a href="{% url 'finanzas:dashboard' %}" class="btn btn-outline-secondary ms-2">
+                                    ❌ Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS para campos del formulario -->
+<style>
+.form-control, .form-select {
+    border-radius: 0.375rem;
+}
+.form-label {
+    font-weight: 500;
+}
+.border-bottom {
+    border-color: #dee2e6 !important;
+}
+</style>
+
+<!-- JS para mejorar UX -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en primer campo
+    document.querySelector('input[name="cantidad"]').focus();
+
+    // Indicador visual de tipo de transacción
+    const cantidadInput = document.querySelector('input[name="cantidad"]');
+    cantidadInput.addEventListener('input', function() {
+        const value = parseFloat(this.value);
+        const parent = this.closest('.input-group');
+
+        // Remover clases anteriores
+        parent.classList.remove('border-success', 'border-danger');
+
+        // Agregar clase según el tipo
+        if (value > 0) {
+            parent.classList.add('border-success');
+        } else if (value < 0) {
+            parent.classList.add('border-danger');
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Debug Permisos{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>🔍 Debug de Permisos</h2>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5>Usuario: {{ user.username }}</h5>
+                    <ul>
+                        <li><strong>ID:</strong> {{ user.id }}</li>
+                        <li><strong>Nombre completo:</strong> {{ user.get_full_name|default:"Sin nombre" }}</li>
+                        <li><strong>Email:</strong> {{ user.email|default:"Sin email" }}</li>
+                        <li><strong>Es superuser:</strong> {{ user.is_superuser|yesno:"Sí,No" }}</li>
+                        <li><strong>Está activo:</strong> {{ user.is_active|yesno:"Sí,No" }}</li>
+                        <li><strong>Tiene perfil:</strong> {{ has_profile|yesno:"Sí,No" }}</li>
+                        <li><strong>Tiene asociación:</strong> {{ has_association|yesno:"Sí,No" }}</li>
+                        <li><strong>Es admin de asociación:</strong> {{ is_admin|yesno:"Sí,No" }}</li>
+                    </ul>
+
+                    {% if profile %}
+                    <hr>
+                    <h5>Perfil:</h5>
+                    <ul>
+                        <li><strong>Rol:</strong> {{ profile.role }} ({{ profile.get_role_display }})</li>
+                        <li><strong>Asociación:</strong> {{ profile.asociacion|default:"Sin asociación" }}</li>
+                        <li><strong>Activo:</strong> {{ profile.is_active|yesno:"Sí,No" }}</li>
+                        <li><strong>Fecha ingreso:</strong> {{ profile.fecha_ingreso }}</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
