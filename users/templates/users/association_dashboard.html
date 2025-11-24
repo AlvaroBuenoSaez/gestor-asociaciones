@@ -1,6 +1,0 @@
-<h1>Dashboard Asociación</h1>
-<p>Asociación: {{ asociacion.nombre }}</p>
-<p>Miembros: {{ total_members }}</p>
-<p>Tu rol: {{ is_admin|yesno:"Admin,Miembro" }}</p>
-<a href="{% url 'users:dashboard' %}">Dashboard Principal</a>
-<a href="{% url 'users:logout' %}">Logout</a>
