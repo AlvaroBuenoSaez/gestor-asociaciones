@@ -60,23 +60,14 @@
                         <div class="col-md-6">
                             <p><strong>Nombre:</strong> {{ object.nombre }}</p>
                             <p><strong>Fecha:</strong> {{ object.fecha|date:"d/m/Y H:i" }}</p>
-                            <p><strong>Lugar:</strong> {{ object.lugar|default:"No especificado" }}</p>
+                            <p><strong>Lugar:</strong>
+                                {% if object.lugar_nombre %}{{ object.lugar_nombre }}{% endif %}
+                                {% if object.lugar_nombre and object.lugar_direccion %} - {% endif %}
+                                {% if object.lugar_direccion %}{{ object.lugar_direccion }}{% endif %}
+                                {% if not object.lugar_nombre and not object.lugar_direccion %}No especificado{% endif %}
+                            </p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>Evaluación:</strong>
-                                {% if object.evaluacion %}
-                                    {% for i in "12345" %}
-                                        {% if forloop.counter <= object.evaluacion %}
-                                            ⭐
-                                        {% else %}
-                                            ☆
-                                        {% endif %}
-                                    {% endfor %}
-                                    ({{ object.evaluacion }}/5)
-                                {% else %}
-                                    Sin evaluar
-                                {% endif %}
-                            </p>
                             <p><strong>Duración:</strong> {{ object.duracion|default:"No especificada" }}</p>
                         </div>
                     </div>
@@ -125,7 +116,6 @@
                 <h6>⚠️ Ten en cuenta que:</h6>
                 <ul class="mb-0">
                     <li>Esta acción eliminará <strong>permanentemente</strong> el evento</li>
-                    <li>Se perderán todos los datos asociados (evaluación, etc.)</li>
                     <li>No será posible recuperar la información una vez eliminada</li>
                     <li>Esta acción quedará registrada en el sistema</li>
                 </ul>

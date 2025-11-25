@@ -126,7 +126,7 @@
 
                                 <!-- Relaciones -->
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
                                         <label for="{{ form.evento.id_for_label }}" class="form-label">
                                             Evento Relacionado
                                         </label>
@@ -135,7 +135,25 @@
                                             <div class="text-danger small mt-1">{{ form.evento.errors.0 }}</div>
                                         {% endif %}
                                     </div>
-                                    <div class="col-md-6 mb-3">
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                            Proyecto Relacionado
+                                        </label>
+                                        {{ form.proyecto }}
+                                        {% if form.proyecto.errors %}
+                                            <div class="text-danger small mt-1">{{ form.proyecto.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label for="{{ form.socia.id_for_label }}" class="form-label">
+                                            Socia Relacionada
+                                        </label>
+                                        {{ form.socia }}
+                                        {% if form.socia.errors %}
+                                            <div class="text-danger small mt-1">{{ form.socia.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-12 mb-3">
                                         <label for="{{ form.entidad.id_for_label }}" class="form-label">
                                             Entidad
                                         </label>

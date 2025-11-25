@@ -175,6 +175,12 @@
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}
+                                        {% if socia.email %}
+                                            <br>
+                                            <a href="mailto:{{ socia.email }}" class="text-decoration-none small text-muted">
+                                                📧 {{ socia.email }}
+                                            </a>
+                                        {% endif %}
                                     </td>
                                     <td>
                                         {% if socia.direccion %}
@@ -197,11 +203,11 @@
                                     {% if is_admin %}
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'socias:edit' socia.pk %}"
+                                            <a href="{% url 'socias:edit' socia.id %}"
                                                class="btn btn-outline-primary" title="Editar">
                                                 ✏️
                                             </a>
-                                            <a href="{% url 'socias:delete' socia.pk %}"
+                                            <a href="{% url 'socias:delete' socia.id %}"
                                                class="btn btn-outline-danger" title="Eliminar">
                                                 🗑️
                                             </a>

@@ -39,7 +39,8 @@ def list_eventos(request):
             search_lower = search.lower()
             if not (search_lower in e.get('nombre', '').lower() or
                     search_lower in e.get('descripcion', '').lower() or
-                    search_lower in e.get('lugar', '').lower() or
+                    search_lower in (e.get('lugar_nombre') or '').lower() or
+                    search_lower in (e.get('lugar_direccion') or '').lower() or
                     search_lower in e.get('colaboradores', '').lower()):
                 continue
 
@@ -62,8 +63,7 @@ def list_eventos(request):
     # Mapeo de claves de ordenamiento
     key_map = {
         'fecha': 'fecha',
-        'nombre': 'nombre',
-        'evaluacion': 'evaluacion'
+        'nombre': 'nombre'
     }
     sort_key = key_map.get(order_key, 'fecha')
 
@@ -75,11 +75,6 @@ def list_eventos(request):
 
     # Estadísticas
     total_eventos = len(eventos_data)
-    eventos_evaluados = sum(1 for e in eventos_data if e.get('evaluacion'))
-    promedio_evaluacion = 0
-    if eventos_evaluados > 0:
-        suma = sum(e.get('evaluacion') for e in eventos_data if e.get('evaluacion'))
-        promedio_evaluacion = round(suma / eventos_evaluados, 1)
 
     # Años disponibles
     years = sorted(list(set(e.get('fecha')[:4] for e in eventos_data if e.get('fecha'))), reverse=True)
@@ -94,8 +89,6 @@ def list_eventos(request):
         'current_year': year,
         'current_order': order,
         'total_eventos': total_eventos,
-        'eventos_evaluados': eventos_evaluados,
-        'promedio_evaluacion': promedio_evaluacion,
         'filtered_count': len(filtered_eventos),
         'years': years
     }
@@ -118,14 +111,15 @@ def create_evento(request):
             payload = {
                 "nombre": data['nombre'],
                 "descripcion": data['descripcion'],
-                "lugar": data['lugar'],
+                "lugar_nombre": data['lugar_nombre'],
+                "lugar_direccion": data['lugar_direccion'],
                 "fecha": data['fecha'].isoformat() if data['fecha'] else None,
                 "duracion": str(data['duracion']) if data['duracion'] else None,
                 "colaboradores": data['colaboradores'],
-                "evaluacion": data['evaluacion'],
                 "observaciones": data['observaciones'],
                 "asociacion_id": request.user.profile.asociacion.id,
-                "responsable_id": data['responsable'].id if data['responsable'] else None
+                "responsable_id": data['responsable'].id if data['responsable'] else None,
+                "proyecto_id": data['proyecto'].id if data.get('proyecto') else None
             }
 
             # Ajuste para duracion
@@ -171,6 +165,7 @@ def update_evento(request, pk):
     # Crear instancia dummy para form
     from datetime import datetime, timedelta
     from socias.models import Socia
+    from proyectos.models import Proyecto
 
     responsable_obj = None
     if evento_data.get('responsable_id'):
@@ -179,16 +174,24 @@ def update_evento(request, pk):
         except Socia.DoesNotExist:
             pass
 
+    proyecto_obj = None
+    if evento_data.get('proyecto_id'):
+        try:
+            proyecto_obj = Proyecto.objects.get(id=evento_data['proyecto_id'])
+        except Proyecto.DoesNotExist:
+            pass
+
     evento_instance = Evento(
         id=evento_data['id'],
         nombre=evento_data['nombre'],
         descripcion=evento_data['descripcion'],
-        lugar=evento_data['lugar'],
+        lugar_nombre=evento_data.get('lugar_nombre'),
+        lugar_direccion=evento_data.get('lugar_direccion'),
         colaboradores=evento_data['colaboradores'],
-        evaluacion=evento_data['evaluacion'],
         observaciones=evento_data['observaciones'],
         asociacion_id=evento_data['asociacion_id'],
-        responsable=responsable_obj
+        responsable=responsable_obj,
+        proyecto=proyecto_obj
     )
 
     if evento_data.get('fecha'):
@@ -208,13 +211,14 @@ def update_evento(request, pk):
             payload = {
                 "nombre": data['nombre'],
                 "descripcion": data['descripcion'],
-                "lugar": data['lugar'],
+                "lugar_nombre": data['lugar_nombre'],
+                "lugar_direccion": data['lugar_direccion'],
                 "fecha": data['fecha'].isoformat() if data['fecha'] else None,
                 "duracion": data['duracion'].total_seconds() if data['duracion'] else None,
                 "colaboradores": data['colaboradores'],
-                "evaluacion": data['evaluacion'],
                 "observaciones": data['observaciones'],
-                "responsable_id": data['responsable'].id if data['responsable'] else None
+                "responsable_id": data['responsable'].id if data['responsable'] else None,
+                "proyecto_id": data['proyecto'].id if data.get('proyecto') else None
             }
 
             try:

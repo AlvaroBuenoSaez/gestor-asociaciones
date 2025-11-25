@@ -38,6 +38,20 @@ class Transaccion(models.Model):
         blank=True,
         related_name='transacciones'
     )
+    proyecto = models.ForeignKey(
+        'proyectos.Proyecto',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transacciones'
+    )
+    socia = models.ForeignKey(
+        'socias.Socia',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='transacciones'
+    )
     entidad = models.CharField(
         max_length=200,
         blank=True,

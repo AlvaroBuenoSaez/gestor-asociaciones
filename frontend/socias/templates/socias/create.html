@@ -1,6 +1,46 @@
 {% extends 'base/base_dashboard.html' %}
+{% load static %}
 
 {% block title %}Nueva Socia - Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/geoapify/minimal.css' %}">
+<style>
+.form-control, .form-select {
+    border-radius: 0.375rem;
+}
+.form-label {
+    font-weight: 500;
+}
+.border-bottom {
+    border-color: #dee2e6 !important;
+}
+/* Geoapify custom styles to match Bootstrap */
+.geoapify-autocomplete-input {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.geoapify-autocomplete-input:focus {
+    color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.autocomplete-container {
+    position: relative;
+}
+</style>
+{% endblock %}
 
 {% block dashboard_content %}
 <div class="container-fluid">
@@ -58,23 +98,92 @@
                             <div class="col-12">
                                 <h5 class="border-bottom pb-2">📞 Contacto</h5>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-6 mb-3">
                                 <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
-                                {{ form.telefono }}
+                                <div class="input-group">
+                                    <select class="form-select" id="phone_prefix" style="max-width: 120px;">
+                                        <option value="+34">🇪🇸 +34</option>
+                                        <option value="+33">🇫🇷 +33</option>
+                                        <option value="+351">🇵🇹 +351</option>
+                                        <option value="+44">🇬🇧 +44</option>
+                                        <option value="+49">🇩🇪 +49</option>
+                                        <option value="+39">🇮🇹 +39</option>
+                                        <option value="+1">🇺🇸 +1</option>
+                                        <option value="">Otro</option>
+                                    </select>
+                                    {{ form.telefono }}
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label for="{{ form.direccion.id_for_label }}" class="form-label">Dirección</label>
-                                {{ form.direccion }}
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors }}</div>
+                                {% endif %}
                             </div>
-                            <div class="col-md-4">
+
+                            <!-- Dirección con Autocomplete -->
+                            <div class="col-md-12 mb-3">
+                                {% if not GEOAPIFY_API_KEY %}
+                                <div class="alert alert-warning py-1 px-2 mb-2">
+                                    <small>⚠️ API Key no detectada. Modo manual activo.</small>
+                                </div>
+                                {% endif %}
+
+                                <label class="form-label">Dirección {% if GEOAPIFY_API_KEY %}(Búsqueda Automática){% endif %}</label>
+
+                                {% if GEOAPIFY_API_KEY %}
+                                    <div id="autocomplete" class="autocomplete-container" style="min-height: 40px;">
+                                        <div class="text-muted p-2 small">
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Cargando buscador...
+                                        </div>
+                                    </div>
+
+                                    <!-- Campo oculto para guardar la dirección completa -->
+                                    <div id="manual-address-input" class="d-none">
+                                        {{ form.direccion }}
+                                    </div>
+
+                                    <!-- Enlace para cambiar a manual -->
+                                    <div class="mt-1 text-end">
+                                        <a href="#" id="toggle-manual-mode" class="text-decoration-none small text-muted">
+                                            ¿Problemas? Ingresar dirección manualmente
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <!-- Fallback si no hay API Key -->
+                                    {{ form.direccion }}
+                                    <div class="form-text text-muted">
+                                        <small>Introduce la dirección manualmente.</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Detalles de dirección -->
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.numero.id_for_label }}" class="form-label">Número</label>
+                                {{ form.numero }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.piso.id_for_label }}" class="form-label">Piso</label>
+                                {{ form.piso }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.escalera.id_for_label }}" class="form-label">Escalera</label>
+                                {{ form.escalera }}
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.codigo_postal.id_for_label }}" class="form-label">C. Postal</label>
+                                {{ form.codigo_postal }}
+                            </div>
+                            <div class="col-md-2 mb-3">
                                 <label for="{{ form.provincia.id_for_label }}" class="form-label">Provincia</label>
                                 {{ form.provincia }}
                             </div>
-                            <div class="col-md-4">
-                                <label for="{{ form.codigo_postal.id_for_label }}" class="form-label">Código Postal</label>
-                                {{ form.codigo_postal }}
-                            </div>
-                            <div class="col-md-4">
+                            <div class="col-md-2 mb-3">
                                 <label for="{{ form.pais.id_for_label }}" class="form-label">País</label>
                                 {{ form.pais }}
                             </div>
@@ -121,31 +230,189 @@
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- CSS para campos del formulario -->
-<style>
-.form-control, .form-select {
-    border-radius: 0.375rem;
-}
-.form-label {
-    font-weight: 500;
-}
-.border-bottom {
-    border-color: #dee2e6 !important;
-}
-</style>
-
-<!-- JS para mejorar UX -->
+{% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Iniciando configuración de Geoapify...");
+
+    // --- Configuración de Geoapify ---
+    const myAPIKey = "{{ GEOAPIFY_API_KEY }}";
+
+    const autocompleteContainer = document.getElementById("autocomplete");
+    const manualInputContainer = document.getElementById("manual-address-input");
+    const toggleManualBtn = document.getElementById("toggle-manual-mode");
+
+    if (!autocompleteContainer) return;
+
+    // Función para activar modo manual
+    function enableManualMode(reason) {
+        console.warn("Activando modo manual:", reason);
+        autocompleteContainer.style.display = 'none';
+        if (manualInputContainer) {
+            manualInputContainer.classList.remove('d-none');
+            manualInputContainer.style.display = 'block'; // Asegurar visibilidad
+            const input = manualInputContainer.querySelector('input, textarea');
+            if (input) input.focus();
+        }
+        if (toggleManualBtn) toggleManualBtn.style.display = 'none'; // Ocultar botón si ya estamos en manual
+
+        // Mostrar aviso solo si hay razón de error
+        if (reason && !document.getElementById('geoapify-error-alert')) {
+            const alertDiv = document.createElement('div');
+            alertDiv.id = 'geoapify-error-alert';
+            alertDiv.className = 'alert alert-warning py-1 px-2 mb-2';
+            alertDiv.innerHTML = '<small>⚠️ ' + reason + '</small>';
+            if (manualInputContainer && manualInputContainer.parentNode) {
+                manualInputContainer.parentNode.insertBefore(alertDiv, manualInputContainer);
+            }
+        }
+    }
+
+    // Event listener para el botón manual
+    if (toggleManualBtn) {
+        toggleManualBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            enableManualMode("Modo manual activado por el usuario.");
+        });
+    }
+
+    // Función para cargar script dinámicamente
+    function loadScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = () => {
+                console.log("Script cargado:", url);
+                resolve();
+            };
+            script.onerror = () => {
+                console.error("Error cargando script:", url);
+                reject(new Error(`Fallo al cargar script: ${url}`));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    // Inicialización asíncrona
+    async function initGeoapify() {
+        try {
+            // Verificar si ya está cargado en window
+            if (typeof window.autocomplete === 'undefined' || typeof window.autocomplete.GeocoderAutocomplete === 'undefined') {
+                try {
+                    console.log("Cargando librería local...");
+                    await loadScript("{% static 'vendor/geoapify/index.min.js' %}");
+                } catch (e) {
+                    console.error("Fallo al cargar librería local", e);
+                    throw new Error("No se pudo cargar el archivo local de mapas.");
+                }
+            }
+
+            // Buscar la clase en el namespace 'autocomplete' o globalmente
+            const GeocoderAutocomplete = window.autocomplete?.GeocoderAutocomplete || window.GeocoderAutocomplete;
+
+            if (typeof GeocoderAutocomplete === 'undefined') {
+                console.error("Contenido de window.autocomplete:", window.autocomplete);
+                throw new Error("La clase GeocoderAutocomplete no está definida tras la carga.");
+            }
+
+            console.log("Inicializando GeocoderAutocomplete...");
+            // Limpiar indicador de carga
+            autocompleteContainer.innerHTML = '';
+
+            const autocompleteWidget = new GeocoderAutocomplete(
+                autocompleteContainer,
+                myAPIKey,
+                {
+                    lang: 'es',
+                    placeholder: 'Escribe la dirección aquí...',
+                    skipDetails: false,
+                    debounceDelay: 500, // Optimización: Esperar 500ms antes de llamar a la API
+                    // Priorizar resultados configurados en .env
+                    filter: {
+                        'countrycode': ["{{ GEOAPIFY_COUNTRY_CODE|default:'es' }}"]
+                    },
+                    bias: {
+                        'proximity': {
+                            'lon': parseFloat("{{ GEOAPIFY_BIAS_LON|default:'-3.703790' }}".replace(',', '.')),
+                            'lat': parseFloat("{{ GEOAPIFY_BIAS_LAT|default:'40.416775' }}".replace(',', '.'))
+                        }
+                    }
+                }
+            );
+
+            const addressInput = document.getElementById("{{ form.direccion.id_for_label }}");
+            const postalCodeInput = document.getElementById("{{ form.codigo_postal.id_for_label }}");
+            const cityInput = document.getElementById("{{ form.provincia.id_for_label }}");
+            const countryInput = document.getElementById("{{ form.pais.id_for_label }}");
+            const numberInput = document.getElementById("{{ form.numero.id_for_label }}");
+
+            autocompleteWidget.on('select', (location) => {
+                console.log("Dirección seleccionada:", location);
+                if (location) {
+                    addressInput.value = location.properties.address_line1 || location.properties.formatted;
+                    if (location.properties.postcode) postalCodeInput.value = location.properties.postcode;
+
+                    if (location.properties.city) cityInput.value = location.properties.city;
+                    else if (location.properties.county) cityInput.value = location.properties.county;
+                    else if (location.properties.state) cityInput.value = location.properties.state;
+
+                    if (location.properties.country) countryInput.value = location.properties.country;
+                    if (location.properties.housenumber) numberInput.value = location.properties.housenumber;
+                }
+            });
+
+            console.log("Geoapify inicializado correctamente");
+
+        } catch (e) {
+            enableManualMode("Error: " + e.message);
+        }
+    }
+
+    // Iniciar proceso
+    initGeoapify();
+
+    // --- Lógica existente del formulario ---
+
     // Auto-focus en primer campo
-    document.querySelector('input[name="numero_socia"]').focus();
+    const numeroSociaInput = document.querySelector('input[name="numero_socia"]');
+    if(numeroSociaInput) numeroSociaInput.focus();
 
     // Validación en tiempo real
-    const numeroSocia = document.querySelector('input[name="numero_socia"]');
-    numeroSocia.addEventListener('input', function() {
-        this.value = this.value.toUpperCase();
-    });
+    if(numeroSociaInput) {
+        numeroSociaInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+
+    // Manejo del prefijo telefónico
+    const phoneInput = document.querySelector('input[name="telefono"]');
+    const prefixSelect = document.getElementById('phone_prefix');
+
+    if (phoneInput && prefixSelect) {
+        // Inicializar si está vacío
+        if (!phoneInput.value) {
+            phoneInput.value = prefixSelect.value + ' ';
+        }
+
+        // Actualizar input al cambiar prefijo
+        prefixSelect.addEventListener('change', function() {
+            const currentVal = phoneInput.value.trim();
+            if (currentVal.startsWith('+')) {
+                const parts = currentVal.split(' ');
+                if (parts.length > 1) {
+                    parts[0] = this.value;
+                    phoneInput.value = parts.join(' ');
+                } else {
+                    phoneInput.value = this.value + ' ';
+                }
+            } else {
+                phoneInput.value = this.value + ' ' + currentVal;
+            }
+            phoneInput.focus();
+        });
+    }
 });
 </script>
 {% endblock %}

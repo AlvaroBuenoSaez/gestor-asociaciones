@@ -11,10 +11,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Load environment variables from .env file in the root of the workspace
+env_path = BASE_DIR.parent / '.env'
+print(f"Loading .env from: {env_path}")
+if env_path.exists():
+    print(".env file found!")
+    load_dotenv(env_path)
+else:
+    print(".env file NOT found!")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -26,6 +36,14 @@ SECRET_KEY = 'django-insecure-=r)7a+lamvyun3ec&g67sx8u6n1^p*pa-q^0zykwawj9u@&=$e
 DEBUG = True
 
 ALLOWED_HOSTS = []
+
+# API Keys
+GEOAPIFY_API_KEY = os.getenv('GEOAPIFY_API_KEY')
+GEOAPIFY_BIAS_LAT = os.getenv('GEOAPIFY_BIAS_LAT', '40.416775') # Default Madrid
+GEOAPIFY_BIAS_LON = os.getenv('GEOAPIFY_BIAS_LON', '-3.703790') # Default Madrid
+GEOAPIFY_COUNTRY_CODE = os.getenv('GEOAPIFY_COUNTRY_CODE', 'es')
+
+
 
 
 # Application definition
@@ -67,6 +85,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.global_settings',
             ],
         },
     },
@@ -121,6 +140,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

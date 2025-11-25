@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('eventos', '0003_evento_responsable_alter_evento_participantes_and_more'),
-        ('socias', '__latest__'),  # Aseguramos que las socias estén disponibles
+        ('socias', '0002_alter_socia_numero_socia'),  # Aseguramos que las socias estén disponibles
     ]
 
     operations = [

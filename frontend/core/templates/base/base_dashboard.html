@@ -13,10 +13,6 @@
                 <a class="nav-link" href="{% url 'eventos:list' %}">🎯 Actividades</a>
                 <a class="nav-link" href="{% url 'proyectos:list' %}">📋 Proyectos</a>
                 <a class="nav-link" href="{% url 'eventos:mapas' %}">🗺️ Mapas</a>
-                <a class="nav-link" href="{% url 'users:drive_files' %}">📂 Documentos</a>
-                {% if user.profile.is_association_admin %}
-                    <a class="nav-link" href="{% url 'users:usuarios_web' %}">⚙️ Usuarios Web</a>
-                {% endif %}
             </div>
 
             <div class="navbar-nav">
@@ -24,8 +20,13 @@
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                         {{ user.get_full_name|default:user.username }}
                     </a>
-                    <ul class="dropdown-menu">
+                    <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="{% url 'users:dashboard' %}">Dashboard</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'users:backend_management' %}">⚙️ Gestión Backend</a></li>
+                        {% if user.profile.is_association_admin %}
+                        <li><a class="dropdown-item" href="{% url 'users:usuarios_web' %}">👥 Gestión Usuarios</a></li>
+                        {% endif %}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'users:logout' %}">Cerrar Sesión</a></li>
                     </ul>

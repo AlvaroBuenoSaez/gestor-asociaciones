@@ -1,0 +1,540 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <h2 class="mb-4">⚙️ Gestión Backend</h2>
+
+    <ul class="nav nav-tabs" id="backendTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'database' %}active{% endif %}" id="database-tab" data-bs-toggle="tab" data-bs-target="#database" type="button" role="tab">
+                💾 Base de Datos
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'drive' %}active{% endif %}" id="drive-tab" data-bs-toggle="tab" data-bs-target="#drive" type="button" role="tab">
+                📂 Google Drive
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content p-4 border border-top-0 bg-white" id="backendTabsContent">
+
+        <!-- ==================== DATABASE TAB ==================== -->
+        <div class="tab-pane fade {% if active_tab == 'database' %}show active{% endif %}" id="database" role="tabpanel">
+
+            <!-- Global Actions -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <h5 class="mb-1">📦 Copia de Seguridad Completa</h5>
+                        <p class="mb-3 text-muted small">Descarga todos los datos (Socias, Contabilidad, Actividades, Proyectos) en un único archivo Excel.</p>
+                        <a href="{% url 'users:export_global_excel' %}" class="btn btn-success w-100">
+                            <i class="bi bi-file-earmark-spreadsheet"></i> Descargar Todo (Excel)
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded border h-100">
+                        <h5 class="mb-1">🔄 Restauración Completa</h5>
+                        <p class="mb-3 text-muted small">Importa todos los datos desde un archivo Excel global (generado previamente).</p>
+                        <form action="{% url 'users:import_global_excel' %}" method="post" enctype="multipart/form-data" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <input class="form-control" type="file" name="file" accept=".xlsx" required>
+                            <button type="submit" class="btn btn-primary" title="Importar Todo">
+                                <i class="bi bi-upload"></i> Importar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sub-tabs for Database Sections -->
+            <ul class="nav nav-pills mb-3" id="dbSubTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="socias-tab" data-bs-toggle="pill" data-bs-target="#socias" type="button" role="tab">👥 Socias</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="finanzas-tab" data-bs-toggle="pill" data-bs-target="#finanzas" type="button" role="tab">💰 Contabilidad</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="eventos-tab" data-bs-toggle="pill" data-bs-target="#eventos" type="button" role="tab">🎯 Actividades</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="proyectos-tab" data-bs-toggle="pill" data-bs-target="#proyectos" type="button" role="tab">📋 Proyectos</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="dbSubTabsContent">
+                <!-- Socias Sub-Tab -->
+                <div class="tab-pane fade show active" id="socias" role="tabpanel">
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📥 Exportar</h5>
+                                    <p class="card-text">Descargar listado de socias.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'users:export_socias' %}?format=csv" class="btn btn-outline-primary">
+                                            <i class="bi bi-filetype-csv"></i> Descargar CSV
+                                        </a>
+                                        <a href="{% url 'users:export_socias' %}?format=excel" class="btn btn-outline-success">
+                                            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📤 Importar</h5>
+                                    <p class="card-text">Cargar socias desde archivo.</p>
+                                    <form action="{% url 'users:import_socias' %}" method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <input class="form-control" type="file" name="file" accept=".csv, .xlsx, .xls" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-upload"></i> Importar
+                                        </button>
+                                    </form>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <a href="{% url 'users:export_socias' %}?format=csv&template=true">Descargar plantilla CSV</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-danger">
+                                    <h5 class="card-title">🗑️ Eliminar</h5>
+                                    <p class="card-text">Acciones destructivas.</p>
+                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteSociasModal">
+                                        <i class="bi bi-trash"></i> Eliminar Todas las Socias
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Other sub-tabs placeholders -->
+                <!-- Finanzas Sub-Tab -->
+                <div class="tab-pane fade" id="finanzas" role="tabpanel">
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📥 Exportar</h5>
+                                    <p class="card-text">Descargar listado de transacciones.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'users:export_finanzas' %}?format=csv" class="btn btn-outline-primary">
+                                            <i class="bi bi-filetype-csv"></i> Descargar CSV
+                                        </a>
+                                        <a href="{% url 'users:export_finanzas' %}?format=excel" class="btn btn-outline-success">
+                                            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📤 Importar</h5>
+                                    <p class="card-text">Cargar transacciones desde archivo.</p>
+                                    <form action="{% url 'users:import_finanzas' %}" method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <input class="form-control" type="file" name="file" accept=".csv, .xlsx, .xls" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-upload"></i> Importar
+                                        </button>
+                                    </form>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <a href="{% url 'users:export_finanzas' %}?format=csv&template=true">Descargar plantilla CSV</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-danger">
+                                    <h5 class="card-title">🗑️ Eliminar</h5>
+                                    <p class="card-text">Acciones destructivas.</p>
+                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteFinanzasModal">
+                                        <i class="bi bi-trash"></i> Eliminar Todas las Transacciones
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Eventos Sub-Tab -->
+                <div class="tab-pane fade" id="eventos" role="tabpanel">
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📥 Exportar</h5>
+                                    <p class="card-text">Descargar listado de actividades.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'users:export_eventos' %}?format=csv" class="btn btn-outline-primary">
+                                            <i class="bi bi-filetype-csv"></i> Descargar CSV
+                                        </a>
+                                        <a href="{% url 'users:export_eventos' %}?format=excel" class="btn btn-outline-success">
+                                            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📤 Importar</h5>
+                                    <p class="card-text">Cargar actividades desde archivo.</p>
+                                    <form action="{% url 'users:import_eventos' %}" method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <input class="form-control" type="file" name="file" accept=".csv, .xlsx, .xls" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-upload"></i> Importar
+                                        </button>
+                                    </form>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <a href="{% url 'users:export_eventos' %}?format=csv&template=true">Descargar plantilla CSV</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-danger">
+                                    <h5 class="card-title">🗑️ Eliminar</h5>
+                                    <p class="card-text">Acciones destructivas.</p>
+                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteEventosModal">
+                                        <i class="bi bi-trash"></i> Eliminar Todas las Actividades
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Proyectos Sub-Tab -->
+                <div class="tab-pane fade" id="proyectos" role="tabpanel">
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📥 Exportar</h5>
+                                    <p class="card-text">Descargar listado de proyectos.</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'users:export_proyectos' %}?format=csv" class="btn btn-outline-primary">
+                                            <i class="bi bi-filetype-csv"></i> Descargar CSV
+                                        </a>
+                                        <a href="{% url 'users:export_proyectos' %}?format=excel" class="btn btn-outline-success">
+                                            <i class="bi bi-file-earmark-excel"></i> Descargar Excel
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h5 class="card-title">📤 Importar</h5>
+                                    <p class="card-text">Cargar proyectos desde archivo.</p>
+                                    <form action="{% url 'users:import_proyectos' %}" method="post" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="mb-3">
+                                            <input class="form-control" type="file" name="file" accept=".csv, .xlsx, .xls" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="bi bi-upload"></i> Importar
+                                        </button>
+                                    </form>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <a href="{% url 'users:export_proyectos' %}?format=csv&template=true">Descargar plantilla CSV</a>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-body text-danger">
+                                    <h5 class="card-title">🗑️ Eliminar</h5>
+                                    <p class="card-text">Acciones destructivas.</p>
+                                    <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteProyectosModal">
+                                        <i class="bi bi-trash"></i> Eliminar Todos los Proyectos
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== GOOGLE DRIVE TAB ==================== -->
+        <div class="tab-pane fade {% if active_tab == 'drive' %}show active{% endif %}" id="drive" role="tabpanel">
+
+            <!-- Connection Status Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4 p-3 bg-light rounded">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-google fs-3 me-3 text-primary"></i>
+                    <div>
+                        <h5 class="mb-0">Estado de Conexión</h5>
+                        <span class="badge {% if is_connected %}bg-success{% else %}bg-warning{% endif %}">
+                            {% if is_connected %}Conectado{% else %}Desconectado{% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if not is_connected and auth_url %}
+                    <a href="{{ auth_url }}" class="btn btn-primary">
+                        <i class="bi bi-google me-2"></i> Conectar Cuenta
+                    </a>
+                {% endif %}
+            </div>
+
+            {% if is_connected %}
+                <div class="row">
+                    <!-- Left Column: Files Management -->
+                    <div class="col-lg-8">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">📂 Archivos en la Nube</h6>
+                            </div>
+                            <div class="card-body">
+                                <!-- Upload Form -->
+                                <form action="{% url 'users:drive_upload' %}" method="post" enctype="multipart/form-data" class="row g-3 align-items-center mb-4">
+                                    {% csrf_token %}
+                                    <div class="col-auto flex-grow-1">
+                                        <input type="file" name="file" class="form-control" required>
+                                    </div>
+                                    <div class="col-auto">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-cloud-upload"></i> Subir
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <!-- Files List -->
+                                {% if not asociacion.drive_folder_id %}
+                                    <div class="alert alert-warning">
+                                        <i class="bi bi-exclamation-triangle"></i> No se ha seleccionado una carpeta de destino.
+                                        Usa el panel de configuración a la derecha.
+                                    </div>
+                                {% else %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover align-middle">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Nombre</th>
+                                                    <th>Fecha</th>
+                                                    <th class="text-end">Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for file in files %}
+                                                <tr>
+                                                    <td>
+                                                        <a href="{{ file.webViewLink }}" target="_blank" class="text-decoration-none text-dark d-flex align-items-center">
+                                                            <img src="{{ file.iconLink }}" alt="" class="me-2" style="width: 16px; height: 16px;">
+                                                            {{ file.name }}
+                                                        </a>
+                                                    </td>
+                                                    <td class="text-muted small">{{ file.createdTime|date:"d/m/Y H:i" }}</td>
+                                                    <td class="text-end">
+                                                        <form action="{% url 'users:drive_delete' %}" method="post" style="display:inline;" onsubmit="return confirm('¿Estás seguro de eliminar este archivo?');">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="delete_file_id" value="{{ file.id }}">
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm" title="Eliminar">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% empty %}
+                                                <tr>
+                                                    <td colspan="3" class="text-center py-4 text-muted">
+                                                        <i class="bi bi-folder2-open display-4 d-block mb-2"></i>
+                                                        No hay archivos en esta carpeta.
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Configuration -->
+                    <div class="col-lg-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h6 class="mb-0">⚙️ Configuración de Carpeta</h6>
+                            </div>
+                            <div class="card-body">
+                                {% if asociacion.drive_folder_id %}
+                                    <div class="mb-3 p-2 bg-light rounded border">
+                                        <small class="text-muted d-block">Carpeta Actual:</small>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <code class="text-dark">{{ asociacion.drive_folder_id }}</code>
+                                            {% if folder_link %}
+                                            <a href="{{ folder_link }}" target="_blank" class="btn btn-sm btn-outline-secondary" title="Abrir en Drive">
+                                                <i class="bi bi-box-arrow-up-right"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                <hr>
+                                <h6>Crear Nueva Carpeta</h6>
+                                <form action="{% url 'users:drive_create_folder' %}" method="post" class="mb-4">
+                                    {% csrf_token %}
+                                    <div class="mb-2">
+                                        <input type="text" class="form-control form-control-sm" name="folder_name"
+                                               value="Gestor Asociaciones - {{ asociacion.nombre }}" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+                                        Crear Carpeta
+                                    </button>
+                                </form>
+
+                                <hr>
+                                <h6>Seleccionar Existente</h6>
+                                <form action="{% url 'users:drive_select_folder' %}" method="post">
+                                    {% csrf_token %}
+                                    <div class="list-group overflow-auto" style="max-height: 200px;">
+                                        {% for folder in folders %}
+                                        <button type="submit" name="folder_id" value="{{ folder.id }}"
+                                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center p-2 small {% if folder.id == asociacion.drive_folder_id %}active{% endif %}">
+                                            <span class="text-truncate">
+                                                <i class="bi bi-folder-fill text-warning me-1"></i>
+                                                {{ folder.name }}
+                                            </span>
+                                        </button>
+                                        {% empty %}
+                                        <div class="text-center p-2 text-muted small">
+                                            No se encontraron carpetas.
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar Socias -->
+<div class="modal fade" id="deleteSociasModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar <strong>TODAS</strong> las socias de la base de datos?</p>
+                <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'users:delete_all_socias' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, eliminar todo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar Finanzas -->
+<div class="modal fade" id="deleteFinanzasModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar <strong>TODAS</strong> las transacciones de la base de datos?</p>
+                <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'users:delete_all_finanzas' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, eliminar todo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar Eventos -->
+<div class="modal fade" id="deleteEventosModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar <strong>TODAS</strong> las actividades de la base de datos?</p>
+                <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'users:delete_all_eventos' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, eliminar todo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Confirmación Eliminar Proyectos -->
+<div class="modal fade" id="deleteProyectosModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">⚠️ Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar <strong>TODOS</strong> los proyectos de la base de datos?</p>
+                <p class="text-danger fw-bold">Esta acción no se puede deshacer.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form action="{% url 'users:delete_all_proyectos' %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Sí, eliminar todo</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

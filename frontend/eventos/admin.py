@@ -11,30 +11,29 @@ class EventoAdmin(admin.ModelAdmin):
 
     # Campos mostrados en la lista
     list_display = [
-        'nombre', 'fecha_formatted', 'lugar',
-        'evaluacion', 'evaluacion_stars', 'asociacion'
+        'nombre', 'fecha_formatted', 'lugar_nombre', 'proyecto', 'asociacion'
     ]
 
     # Campos de búsqueda
-    search_fields = ['nombre', 'descripcion', 'lugar', 'colaboradores']
+    search_fields = ['nombre', 'descripcion', 'lugar_nombre', 'lugar_direccion', 'colaboradores']
 
     # Filtros laterales
-    list_filter = ['fecha', 'evaluacion']
+    list_filter = ['fecha', 'proyecto']
 
     # Campos editables desde la lista
-    list_editable = ['evaluacion']
+    list_editable = []
 
     # Organización en fieldsets
     fieldsets = (
         ('Información básica', {
-            'fields': ('nombre', 'responsable', 'descripcion', 'lugar')
+            'fields': ('nombre', 'responsable', 'proyecto', 'descripcion', 'lugar_nombre', 'lugar_direccion')
         }),
         ('Fechas y duración', {
             'fields': ('fecha', 'duracion')
         }),
         ('Colaboradores y evaluación', {
-            'fields': ('colaboradores', 'evaluacion', 'observaciones'),
-            'description': 'Colaboradores y evaluación del evento (1-5 estrellas)'
+            'fields': ('colaboradores', 'observaciones'),
+            'description': 'Colaboradores y observaciones del evento'
         }),
     )
 
@@ -49,15 +48,6 @@ class EventoAdmin(admin.ModelAdmin):
         return obj.fecha.strftime('%d/%m/%Y %H:%M')
     fecha_formatted.short_description = 'Fecha'
     fecha_formatted.admin_order_field = 'fecha'
-
-    def evaluacion_stars(self, obj):
-        """Mostrar evaluación con estrellas"""
-        if obj.evaluacion:
-            stars = '⭐' * obj.evaluacion
-            return format_html('<span title="{}/5">{}</span>', obj.evaluacion, stars)
-        return '❌ Sin evaluar'
-    evaluacion_stars.short_description = 'Evaluación'
-    evaluacion_stars.admin_order_field = 'evaluacion'
 
     def get_queryset(self, request):
         """Filtrar eventos por asociación del usuario"""

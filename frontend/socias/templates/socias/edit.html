@@ -1,158 +1,370 @@
 {% extends 'base/base_dashboard.html' %}
+{% load static %}
 
 {% block title %}Editar Socia - Dashboard{% endblock %}
 
-{% block content %}
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h2>✏️ Editar Socia</h2>
-                        <a href="{% url 'socias:list' %}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Volver a la lista
-                        </a>
-                    </div>
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/geoapify/minimal.css' %}">
+<style>
+.form-control, .form-select {
+    border-radius: 0.375rem;
+}
+.form-label {
+    font-weight: 500;
+}
+.border-bottom {
+    border-color: #dee2e6 !important;
+}
+/* Geoapify custom styles to match Bootstrap */
+.geoapify-autocomplete-input {
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: 0.375rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.geoapify-autocomplete-input:focus {
+    color: #212529;
+    background-color: #fff;
+    border-color: #86b7fe;
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+.autocomplete-container {
+    position: relative;
+}
+</style>
+{% endblock %}
 
-                    <div class="card-body">
-                        {% if form.errors %}
-                            <div class="alert alert-danger">
-                                <h5>Por favor, corrige los siguientes errores:</h5>
-                                {{ form.errors }}
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>✏️ Editar Socia</h2>
+                <a href="{% url 'socias:list' %}" class="btn btn-outline-secondary">
+                    ← Volver a Lista
+                </a>
+            </div>
+
+            <!-- Formulario -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Información básica -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">📋 Información Básica</h5>
                             </div>
-                        {% endif %}
+                            <div class="col-md-4">
+                                <label for="{{ form.numero_socia.id_for_label }}" class="form-label">Número de Socia *</label>
+                                {{ form.numero_socia }}
+                                <div class="form-text">
+                                    <small class="text-muted">
+                                        <i class="bi bi-info-circle"></i> No se puede modificar
+                                    </small>
+                                </div>
+                                {% if form.numero_socia.errors %}
+                                    <div class="text-danger">{{ form.numero_socia.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre *</label>
+                                {{ form.nombre }}
+                                {% if form.nombre.errors %}
+                                    <div class="text-danger">{{ form.nombre.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos *</label>
+                                {{ form.apellidos }}
+                                {% if form.apellidos.errors %}
+                                    <div class="text-danger">{{ form.apellidos.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
 
-                        <form method="post" class="needs-validation" novalidate>
-                            {% csrf_token %}
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <h5 class="border-bottom pb-2">📋 Información Básica</h5>
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.numero_socia.id_for_label }}" class="form-label">Número de Socia *</label>
-                                    {{ form.numero_socia }}
-                                    <div class="form-text">
-                                        <small class="text-muted">
-                                            <i class="bi bi-info-circle"></i> El número de socia no se puede cambiar
-                                        </small>
-                                    </div>
-                                    {% if form.numero_socia.errors %}
-                                        <div class="text-danger">{{ form.numero_socia.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.nombre.id_for_label }}" class="form-label">Nombre *</label>
-                                    {{ form.nombre }}
-                                    {% if form.nombre.errors %}
-                                        <div class="text-danger">{{ form.nombre.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.apellidos.id_for_label }}" class="form-label">Apellidos *</label>
-                                    {{ form.apellidos }}
-                                    {% if form.apellidos.errors %}
-                                        <div class="text-danger">{{ form.apellidos.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="col-12">
-                                    <h5 class="border-bottom pb-2 mt-4">📞 Información de Contacto</h5>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
+                        <!-- Contacto -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">📞 Contacto</h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.telefono.id_for_label }}" class="form-label">Teléfono</label>
+                                <div class="input-group">
+                                    <select class="form-select" id="phone_prefix" style="max-width: 120px;">
+                                        <option value="+34">🇪🇸 +34</option>
+                                        <option value="+33">🇫🇷 +33</option>
+                                        <option value="+351">🇵🇹 +351</option>
+                                        <option value="+44">🇬🇧 +44</option>
+                                        <option value="+49">🇩🇪 +49</option>
+                                        <option value="+39">🇮🇹 +39</option>
+                                        <option value="+1">🇺🇸 +1</option>
+                                        <option value="">Otro</option>
+                                    </select>
                                     {{ form.telefono }}
-                                    {% if form.telefono.errors %}
-                                        <div class="text-danger">{{ form.telefono.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="{{ form.direccion.id_for_label }}" class="form-label">Dirección</label>
-                                    {{ form.direccion }}
-                                    {% if form.direccion.errors %}
-                                        <div class="text-danger">{{ form.direccion.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.provincia.id_for_label }}" class="form-label">Provincia</label>
-                                    {{ form.provincia }}
-                                    {% if form.provincia.errors %}
-                                        <div class="text-danger">{{ form.provincia.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.codigo_postal.id_for_label }}" class="form-label">Código Postal</label>
-                                    {{ form.codigo_postal }}
-                                    {% if form.codigo_postal.errors %}
-                                        <div class="text-danger">{{ form.codigo_postal.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="{{ form.pais.id_for_label }}" class="form-label">País</label>
-                                    {{ form.pais }}
-                                    {% if form.pais.errors %}
-                                        <div class="text-danger">{{ form.pais.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="col-12">
-                                    <h5 class="border-bottom pb-2 mt-4">📅 Información Personal</h5>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="{{ form.nacimiento.id_for_label }}" class="form-label">Fecha de Nacimiento</label>
-                                    {{ form.nacimiento }}
-                                    {% if form.nacimiento.errors %}
-                                        <div class="text-danger">{{ form.nacimiento.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check mt-4">
-                                        {{ form.pagado }}
-                                        <label class="form-check-label" for="{{ form.pagado.id_for_label }}">
-                                            💰 ¿Ha pagado la cuota?
-                                        </label>
-                                    </div>
-                                    {% if form.pagado.errors %}
-                                        <div class="text-danger">{{ form.pagado.errors }}</div>
-                                    {% endif %}
-                                </div>
-                                <div class="col-12">
-                                    <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción / Notas</label>
-                                    {{ form.descripcion }}
-                                    {% if form.descripcion.errors %}
-                                        <div class="text-danger">{{ form.descripcion.errors }}</div>
-                                    {% endif %}
-                                </div>
-
-                                <div class="col-12">
-                                    <hr class="my-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        💾 Actualizar Socia
-                                    </button>
-                                    <a href="{% url 'socias:list' %}" class="btn btn-outline-secondary ms-2">
-                                        ❌ Cancelar
-                                    </a>
                                 </div>
                             </div>
-                        </form>
-                    </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">Correo Electrónico</label>
+                                {{ form.email }}
+                                {% if form.email.errors %}
+                                    <div class="text-danger">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Dirección con Autocomplete -->
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Dirección {% if GEOAPIFY_API_KEY %}(Búsqueda Automática){% endif %}</label>
+
+                                {% if GEOAPIFY_API_KEY %}
+                                    <div id="autocomplete" class="autocomplete-container" style="min-height: 40px;">
+                                        <div class="text-muted p-2 small">
+                                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                            Cargando buscador...
+                                        </div>
+                                    </div>
+                                    <!-- Campo para dirección (oculto si funciona el mapa, visible si falla) -->
+                                    <div id="manual-address-input" class="d-none">
+                                        {{ form.direccion }}
+                                    </div>
+
+                                    <!-- Enlace para cambiar a manual -->
+                                    <div class="mt-1 text-end">
+                                        <a href="#" id="toggle-manual-mode" class="text-decoration-none small text-muted">
+                                            ¿Problemas? Ingresar dirección manualmente
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <!-- Fallback si no hay API Key -->
+                                    {{ form.direccion }}
+                                    <div class="form-text text-muted">
+                                        <small>Introduce la dirección manualmente.</small>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Detalles de dirección -->
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.numero.id_for_label }}" class="form-label">Número</label>
+                                {{ form.numero }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.piso.id_for_label }}" class="form-label">Piso</label>
+                                {{ form.piso }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.escalera.id_for_label }}" class="form-label">Escalera</label>
+                                {{ form.escalera }}
+                            </div>
+
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.codigo_postal.id_for_label }}" class="form-label">C. Postal</label>
+                                {{ form.codigo_postal }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.provincia.id_for_label }}" class="form-label">Provincia</label>
+                                {{ form.provincia }}
+                            </div>
+                            <div class="col-md-2 mb-3">
+                                <label for="{{ form.pais.id_for_label }}" class="form-label">País</label>
+                                {{ form.pais }}
+                            </div>
+                        </div>
+
+                        <!-- Fechas y estado -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5 class="border-bottom pb-2">📅 Fechas y Estado</h5>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="{{ form.nacimiento.id_for_label }}" class="form-label">Fecha de Nacimiento</label>
+                                {{ form.nacimiento }}
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check mt-4">
+                                    {{ form.pagado }}
+                                    <label for="{{ form.pagado.id_for_label }}" class="form-check-label">
+                                        Ha pagado la cuota
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-12 mt-3">
+                                <label for="{{ form.descripcion.id_for_label }}" class="form-label">Descripción/Notas</label>
+                                {{ form.descripcion }}
+                            </div>
+                        </div>
+
+                        <!-- Botones -->
+                        <div class="row">
+                            <div class="col-12">
+                                <hr>
+                                <button type="submit" class="btn btn-primary">
+                                    💾 Actualizar Socia
+                                </button>
+                                <a href="{% url 'socias:list' %}" class="btn btn-outline-secondary ms-2">
+                                    ❌ Cancelar
+                                </a>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Enfocar el campo de nombre al cargar la página
-    document.querySelector('input[name="nombre"]').focus();
+    // --- Configuración de Geoapify ---
+    const myAPIKey = "{{ GEOAPIFY_API_KEY }}";
 
-    // Hacer el número de socia readonly en edición
-    const numeroSocia = document.querySelector('input[name="numero_socia"]');
-    if (numeroSocia) {
-        numeroSocia.setAttribute('readonly', true);
-        numeroSocia.style.backgroundColor = '#f8f9fa';
+    const autocompleteContainer = document.getElementById("autocomplete");
+    const manualInputContainer = document.getElementById("manual-address-input");
+    const toggleManualBtn = document.getElementById("toggle-manual-mode");
+
+    if (!autocompleteContainer) return;
+
+    // Función para activar modo manual
+    function enableManualMode(reason) {
+        console.warn("Activando modo manual:", reason);
+        autocompleteContainer.style.display = 'none';
+        if (manualInputContainer) {
+            manualInputContainer.classList.remove('d-none');
+            manualInputContainer.style.display = 'block'; // Asegurar visibilidad
+            const input = manualInputContainer.querySelector('input, textarea');
+            if (input) input.focus();
+        }
+        if (toggleManualBtn) toggleManualBtn.style.display = 'none';
+
+        if (reason && !document.getElementById('geoapify-error-alert')) {
+            const alertDiv = document.createElement('div');
+            alertDiv.id = 'geoapify-error-alert';
+            alertDiv.className = 'alert alert-warning py-1 px-2 mb-2';
+            alertDiv.innerHTML = '<small>⚠️ ' + reason + '</small>';
+            if (manualInputContainer && manualInputContainer.parentNode) {
+                manualInputContainer.parentNode.insertBefore(alertDiv, manualInputContainer);
+            }
+        }
     }
+
+    // Event listener para el botón manual
+    if (toggleManualBtn) {
+        toggleManualBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            enableManualMode("Modo manual activado por el usuario.");
+        });
+    }
+
+    // Función para cargar script dinámicamente
+    function loadScript(url) {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = url;
+            script.onload = () => {
+                console.log("Script cargado:", url);
+                resolve();
+            };
+            script.onerror = () => {
+                console.error("Error cargando script:", url);
+                reject(new Error(`Fallo al cargar script: ${url}`));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    // Inicialización asíncrona
+    async function initGeoapify() {
+        try {
+            // Verificar si ya está cargado en window
+            if (typeof window.autocomplete === 'undefined' || typeof window.autocomplete.GeocoderAutocomplete === 'undefined') {
+                try {
+                    console.log("Cargando librería local...");
+                    await loadScript("{% static 'vendor/geoapify/index.min.js' %}");
+                } catch (e) {
+                    console.error("Fallo al cargar librería local", e);
+                    throw new Error("No se pudo cargar el archivo local de mapas.");
+                }
+            }
+
+            // Buscar la clase en el namespace 'autocomplete' o globalmente
+            const GeocoderAutocomplete = window.autocomplete?.GeocoderAutocomplete || window.GeocoderAutocomplete;
+
+            if (typeof GeocoderAutocomplete === 'undefined') {
+                console.error("Contenido de window.autocomplete:", window.autocomplete);
+                throw new Error("La clase GeocoderAutocomplete no está definida tras la carga.");
+            }
+
+            // Limpiar indicador de carga
+            autocompleteContainer.innerHTML = '';
+
+            const autocompleteWidget = new GeocoderAutocomplete(
+                autocompleteContainer,
+                myAPIKey,
+                {
+                    lang: 'es',
+                    placeholder: 'Escribe la dirección aquí...',
+                    debounceDelay: 500, // Optimización: Esperar 500ms antes de llamar a la API
+                    // Priorizar resultados configurados en .env
+                    filter: {
+                        'countrycode': ["{{ GEOAPIFY_COUNTRY_CODE|default:'es' }}"]
+                    },
+                    bias: {
+                        'proximity': {
+                            'lon': parseFloat("{{ GEOAPIFY_BIAS_LON|default:'-3.703790' }}".replace(',', '.')),
+                            'lat': parseFloat("{{ GEOAPIFY_BIAS_LAT|default:'40.416775' }}".replace(',', '.'))
+                        }
+                    }
+                }
+            );
+
+            // Pre-rellenar si hay dirección existente
+            const addressInput = document.getElementById("{{ form.direccion.id_for_label }}");
+            if (addressInput && addressInput.value) {
+                autocompleteWidget.setValue(addressInput.value);
+            }
+
+            const postalCodeInput = document.getElementById("{{ form.codigo_postal.id_for_label }}");
+            const cityInput = document.getElementById("{{ form.provincia.id_for_label }}");
+            const countryInput = document.getElementById("{{ form.pais.id_for_label }}");
+            const numberInput = document.getElementById("{{ form.numero.id_for_label }}");
+
+            autocompleteWidget.on('select', (location) => {
+                if (location) {
+                    addressInput.value = location.properties.address_line1 || location.properties.formatted;
+                    if (location.properties.postcode) postalCodeInput.value = location.properties.postcode;
+                    if (location.properties.city) cityInput.value = location.properties.city;
+                    else if (location.properties.county) cityInput.value = location.properties.county;
+                    else if (location.properties.state) cityInput.value = location.properties.state;
+                    if (location.properties.country) countryInput.value = location.properties.country;
+                    if (location.properties.housenumber) numberInput.value = location.properties.housenumber;
+                }
+            });
+        } catch (e) {
+            enableManualMode("Error al inicializar: " + e.message);
+        }
+    }
+
+    initGeoapify();
+
+    // --- Lógica existente del formulario ---
+    // ... (resto del código existente)
+    const nombreInput = document.querySelector('input[name="nombre"]');
+    if(nombreInput) nombreInput.focus();
+
+    // ... (código del teléfono)
 });
 </script>
 {% endblock %}

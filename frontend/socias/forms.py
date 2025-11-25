@@ -3,6 +3,7 @@ Formularios personalizados para la app socias
 """
 from django import forms
 from django.db.models import Max
+from datetime import date
 from .models import Socia
 
 
@@ -12,8 +13,9 @@ class SociaForm(forms.ModelForm):
     class Meta:
         model = Socia
         fields = [
-            'numero_socia', 'nombre', 'apellidos', 'telefono',
-            'direccion', 'provincia', 'codigo_postal', 'pais',
+            'numero_socia', 'nombre', 'apellidos', 'telefono', 'email',
+            'direccion', 'numero', 'piso', 'escalera',
+            'provincia', 'codigo_postal', 'pais',
             'nacimiento', 'pagado', 'descripcion'
         ]
         widgets = {
@@ -25,11 +27,18 @@ class SociaForm(forms.ModelForm):
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'apellidos': forms.TextInput(attrs={'class': 'form-control'}),
             'telefono': forms.TextInput(attrs={'class': 'form-control'}),
-            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'direccion': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'numero': forms.TextInput(attrs={'class': 'form-control'}),
+            'piso': forms.TextInput(attrs={'class': 'form-control'}),
+            'escalera': forms.TextInput(attrs={'class': 'form-control'}),
             'provincia': forms.TextInput(attrs={'class': 'form-control'}),
             'codigo_postal': forms.TextInput(attrs={'class': 'form-control'}),
             'pais': forms.TextInput(attrs={'class': 'form-control'}),
-            'nacimiento': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'nacimiento': forms.DateInput(
+                format='%Y-%m-%d',
+                attrs={'class': 'form-control', 'type': 'date'}
+            ),
             'pagado': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
@@ -37,6 +46,12 @@ class SociaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.asociacion = kwargs.pop('asociacion', None)
         super().__init__(*args, **kwargs)
+
+        # Establecer fecha de nacimiento por defecto (18 años atrás)
+        if not self.instance.pk:
+            today = date.today()
+            default_birth_date = date(today.year - 18, today.month, today.day)
+            self.fields['nacimiento'].initial = default_birth_date
 
         # Si es creación (no hay instance), auto-asignar el número
         if not self.instance.pk and self.asociacion:

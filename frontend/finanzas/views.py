@@ -15,6 +15,7 @@ from core.mixins import (
     AutoAssignAssociationMixin
 )
 from .models import Transaccion
+from .forms import TransaccionForm
 
 
 class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, ListView):
@@ -111,12 +112,8 @@ class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, List
 class TransaccionCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateView):
     """Vista para crear nueva transacción (solo admins)"""
     model = Transaccion
+    form_class = TransaccionForm
     template_name = 'contabilidad/create.html'
-    fields = [
-        'cantidad', 'concepto', 'descripcion',
-        'fecha_transaccion', 'fecha_vencimiento',
-        'evento', 'entidad'
-    ]
     success_url = reverse_lazy('finanzas:dashboard')
 
     def get_context_data(self, **kwargs):
@@ -159,12 +156,8 @@ class TransaccionCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, Crea
 class TransaccionUpdateView(AdminRequiredMixin, AssociationFilterMixin, UpdateView):
     """Vista para editar transacción (solo admins)"""
     model = Transaccion
+    form_class = TransaccionForm
     template_name = 'contabilidad/edit.html'
-    fields = [
-        'cantidad', 'concepto', 'descripcion',
-        'fecha_transaccion', 'fecha_vencimiento',
-        'evento', 'entidad'
-    ]
     success_url = reverse_lazy('finanzas:dashboard')
 
     def get_context_data(self, **kwargs):

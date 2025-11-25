@@ -55,8 +55,6 @@
                                     <option value="-fecha" {% if current_order == '-fecha' %}selected{% endif %}>Fecha ↓</option>
                                     <option value="nombre" {% if current_order == 'nombre' %}selected{% endif %}>Nombre ↑</option>
                                     <option value="-nombre" {% if current_order == '-nombre' %}selected{% endif %}>Nombre ↓</option>
-                                    <option value="-evaluacion" {% if current_order == '-evaluacion' %}selected{% endif %}>Evaluación ↓</option>
-                                    <option value="evaluacion" {% if current_order == 'evaluacion' %}selected{% endif %}>Evaluación ↑</option>
                                 </select>
                             </div>
                             <div class="col-md-2">
@@ -82,22 +80,6 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <h4>{{ eventos_evaluados|default:0 }}</h4>
-                            <p>Evaluados</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <h4>{{ promedio_evaluacion|default:0 }}/5⭐</h4>
-                            <p>Promedio</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Tabla de eventos -->
@@ -112,7 +94,6 @@
                                     <th>Responsable</th>
                                     <th>Fecha</th>
                                     <th>Lugar</th>
-                                    <th>Evaluación</th>
                                     {% if is_admin %}
                                     <th>Acciones</th>
                                     {% endif %}
@@ -141,29 +122,26 @@
                                             <br><small class="text-muted">Duración: {{ evento.duracion }}</small>
                                         {% endif %}
                                     </td>
-                                    <td>{{ evento.lugar|default:"-" }}</td>
                                     <td>
-                                        {% if evento.evaluacion %}
-                                            {% for i in "12345" %}
-                                                {% if forloop.counter <= evento.evaluacion %}
-                                                    ⭐
-                                                {% else %}
-                                                    ☆
-                                                {% endif %}
-                                            {% endfor %}
-                                            <br><small class="text-muted">{{ evento.evaluacion }}/5</small>
-                                        {% else %}
-                                            <span class="text-muted">Sin evaluar</span>
+                                        {% if evento.lugar_nombre %}
+                                            <strong>{{ evento.lugar_nombre }}</strong>
+                                        {% endif %}
+                                        {% if evento.lugar_direccion %}
+                                            {% if evento.lugar_nombre %}<br>{% endif %}
+                                            <small class="text-muted">📍 {{ evento.lugar_direccion|truncatechars:30 }}</small>
+                                        {% endif %}
+                                        {% if not evento.lugar_nombre and not evento.lugar_direccion %}
+                                            -
                                         {% endif %}
                                     </td>
                                     {% if is_admin %}
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'eventos:edit' evento.pk %}"
+                                            <a href="{% url 'eventos:edit' evento.id %}"
                                                class="btn btn-outline-warning" title="Editar">
                                                 ✏️
                                             </a>
-                                            <a href="{% url 'eventos:delete' evento.pk %}"
+                                            <a href="{% url 'eventos:delete' evento.id %}"
                                                class="btn btn-outline-danger" title="Eliminar">
                                                 🗑️
                                             </a>

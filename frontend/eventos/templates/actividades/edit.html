@@ -1,8 +1,10 @@
 {% extends 'base/base_dashboard.html' %}
+{% load static %}
 
 {% block title %}Editar Evento - Dashboard{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendor/geoapify/minimal.css' %}">
 <style>
     .form-card {
         border: none;
@@ -30,6 +32,30 @@
     .info-card {
         background-color: #e7f3ff;
         border-left: 4px solid #007bff;
+    }
+    /* Geoapify custom styles */
+    .geoapify-autocomplete-input {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        color: #212529;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .geoapify-autocomplete-input:focus {
+        color: #212529;
+        background-color: #fff;
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .autocomplete-container {
+        position: relative;
     }
 </style>
 {% endblock %}
@@ -78,6 +104,16 @@
                                         {% endif %}
                                         <div class="form-text">Socia responsable del evento</div>
                                     </div>
+                                    <div class="col-md-12 mb-3">
+                                        <label for="{{ form.proyecto.id_for_label }}" class="form-label">
+                                            {{ form.proyecto.label }}
+                                        </label>
+                                        {{ form.proyecto }}
+                                        {% if form.proyecto.errors %}
+                                            <div class="text-danger small mt-1">{{ form.proyecto.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Proyecto al que pertenece este evento (opcional)</div>
+                                    </div>
                                 </div>
 
                                 <div class="row">
@@ -93,54 +129,97 @@
                                     </div>
                                 </div>
 
-                                <!-- Fecha y duración -->
+                                <!-- Fecha y hora -->
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ form.fecha.id_for_label }}" class="form-label">
-                                            {{ form.fecha.label }} <span class="required">*</span>
+                                        <label for="{{ form.fecha_dia.id_for_label }}" class="form-label">
+                                            {{ form.fecha_dia.label }} <span class="required">*</span>
                                         </label>
-                                        {{ form.fecha }}
-                                        {% if form.fecha.errors %}
-                                            <div class="text-danger small mt-1">{{ form.fecha.errors.0 }}</div>
+                                        {{ form.fecha_dia }}
+                                        {% if form.fecha_dia.errors %}
+                                            <div class="text-danger small mt-1">{{ form.fecha_dia.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ form.duracion.id_for_label }}" class="form-label">
-                                            {{ form.duracion.label }}
+                                        <label for="{{ form.hora_inicio.id_for_label }}" class="form-label">
+                                            {{ form.hora_inicio.label }} <span class="required">*</span>
                                         </label>
-                                        {{ form.duracion }}
-                                        {% if form.duracion.errors %}
-                                            <div class="text-danger small mt-1">{{ form.duracion.errors.0 }}</div>
+                                        {{ form.hora_inicio }}
+                                        {% if form.hora_inicio.errors %}
+                                            <div class="text-danger small mt-1">{{ form.hora_inicio.errors.0 }}</div>
                                         {% endif %}
-                                        <div class="form-text">Ejemplo: 2 horas, 90 minutos</div>
+                                    </div>
+                                </div>
+
+                                <!-- Duración -->
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label class="form-label">Duración</label>
+                                        <div class="input-group">
+                                            {{ form.duracion_cantidad }}
+                                            {{ form.duracion_unidad }}
+                                        </div>
+                                        {% if form.duracion_cantidad.errors %}
+                                            <div class="text-danger small mt-1">{{ form.duracion_cantidad.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="form-text">Tiempo estimado de duración</div>
                                     </div>
                                 </div>
 
                                 <!-- Lugar -->
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
-                                        <label for="{{ form.lugar.id_for_label }}" class="form-label">
-                                            {{ form.lugar.label }}
+                                        <label for="{{ form.lugar_nombre.id_for_label }}" class="form-label">
+                                            {{ form.lugar_nombre.label }}
                                         </label>
-                                        {{ form.lugar }}
-                                        {% if form.lugar.errors %}
-                                            <div class="text-danger small mt-1">{{ form.lugar.errors.0 }}</div>
+                                        {{ form.lugar_nombre }}
+                                        {% if form.lugar_nombre.errors %}
+                                            <div class="text-danger small mt-1">{{ form.lugar_nombre.errors.0 }}</div>
                                         {% endif %}
-                                        <div class="form-text">Dirección o lugar donde se realizará</div>
+                                        <div class="form-text">Nombre del lugar (ej: Centro Cívico, Plaza Mayor)</div>
                                     </div>
-                                </div>
 
-                                <!-- Evaluación -->
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="{{ form.evaluacion.id_for_label }}" class="form-label">
-                                            {{ form.evaluacion.label }}
-                                        </label>
-                                        {{ form.evaluacion }}
-                                        {% if form.evaluacion.errors %}
-                                            <div class="text-danger small mt-1">{{ form.evaluacion.errors.0 }}</div>
+                                    <div class="col-md-12 mb-3">
+                                        {% if not GEOAPIFY_API_KEY %}
+                                        <div class="alert alert-warning py-1 px-2 mb-2">
+                                            <small>⚠️ API Key no detectada. Modo manual activo.</small>
+                                        </div>
                                         {% endif %}
-                                        <div class="form-text">Valoración del 1 al 5 (⭐⭐⭐⭐⭐)</div>
+
+                                        <label class="form-label">
+                                            {{ form.lugar_direccion.label }} {% if GEOAPIFY_API_KEY %}(Búsqueda Automática){% endif %}
+                                        </label>
+
+                                        {% if GEOAPIFY_API_KEY %}
+                                            <div id="autocomplete" class="autocomplete-container" style="min-height: 40px;">
+                                                <div class="text-muted p-2 small">
+                                                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                    Cargando buscador...
+                                                </div>
+                                            </div>
+
+                                            <!-- Campo oculto para guardar la dirección completa -->
+                                            <div id="manual-address-input" class="d-none">
+                                                {{ form.lugar_direccion }}
+                                            </div>
+
+                                            <!-- Enlace para cambiar a manual -->
+                                            <div class="mt-1 text-end">
+                                                <a href="#" id="toggle-manual-mode" class="text-decoration-none small text-muted">
+                                                    ¿Problemas? Ingresar dirección manualmente
+                                                </a>
+                                            </div>
+                                        {% else %}
+                                            <!-- Fallback si no hay API Key -->
+                                            {{ form.lugar_direccion }}
+                                            <div class="form-text text-muted">
+                                                <small>Introduce la dirección manualmente.</small>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if form.lugar_direccion.errors %}
+                                            <div class="text-danger small mt-1">{{ form.lugar_direccion.errors.0 }}</div>
+                                        {% endif %}
                                     </div>
                                 </div>
 
@@ -185,11 +264,6 @@
                                     <h6 id="preview-nombre">{{ object.nombre }}</h6>
                                     <p id="preview-fecha" class="text-muted">📅 {{ object.fecha|date:"d/m/Y H:i" }}</p>
                                     <p id="preview-lugar" class="text-muted">📍 {{ object.lugar|default:"Lugar por definir" }}</p>
-                                    {% if object.evaluacion %}
-                                    <p id="preview-evaluacion" class="text-muted">
-                                        ⭐ {{ object.evaluacion }}/5
-                                    </p>
-                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -239,55 +313,229 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Configurar campos de fecha
-    const fechaInput = document.getElementById('{{ form.fecha.id_for_label }}');
-    if (fechaInput) {
-        fechaInput.type = 'datetime-local';
-        fechaInput.classList.add('form-control');
+    console.log("Iniciando configuración de Geoapify...");
 
-        // Convertir valor existente al formato datetime-local
-        const currentValue = fechaInput.value;
-        if (currentValue) {
-            const date = new Date(currentValue);
-            if (!isNaN(date.getTime())) {
-                const isoString = date.toISOString();
-                fechaInput.value = isoString.slice(0, 16);
+    // --- Configuración de Geoapify ---
+    const myAPIKey = "{{ GEOAPIFY_API_KEY }}";
+    let autocompleteWidget = null; // Variable global para el widget
+
+    const autocompleteContainer = document.getElementById("autocomplete");
+    const manualInputContainer = document.getElementById("manual-address-input");
+    const toggleManualBtn = document.getElementById("toggle-manual-mode");
+
+    if (autocompleteContainer) {
+        // Función para activar modo manual
+        function enableManualMode(reason) {
+            console.warn("Activando modo manual:", reason);
+            autocompleteContainer.style.display = 'none';
+            if (manualInputContainer) {
+                manualInputContainer.classList.remove('d-none');
+                manualInputContainer.style.display = 'block'; // Asegurar visibilidad
+                const input = manualInputContainer.querySelector('input, textarea');
+                if (input) input.focus();
+            }
+            if (toggleManualBtn) toggleManualBtn.style.display = 'none'; // Ocultar botón si ya estamos en manual
+
+            // Mostrar aviso solo si hay razón de error
+            if (reason && !document.getElementById('geoapify-error-alert')) {
+                const alertDiv = document.createElement('div');
+                alertDiv.id = 'geoapify-error-alert';
+                alertDiv.className = 'alert alert-warning py-1 px-2 mb-2';
+                alertDiv.innerHTML = '<small>⚠️ ' + reason + '</small>';
+                if (manualInputContainer && manualInputContainer.parentNode) {
+                    manualInputContainer.parentNode.insertBefore(alertDiv, manualInputContainer);
+                }
             }
         }
+
+        // Event listener para el botón manual
+        if (toggleManualBtn) {
+            toggleManualBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                enableManualMode("Modo manual activado por el usuario.");
+            });
+        }
+
+        // Función para cargar script dinámicamente
+        function loadScript(url) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = () => {
+                    console.log("Script cargado:", url);
+                    resolve();
+                };
+                script.onerror = () => {
+                    console.error("Error cargando script:", url);
+                    reject(new Error(`Fallo al cargar script: ${url}`));
+                };
+                document.head.appendChild(script);
+            });
+        }
+
+        // Inicialización asíncrona
+        async function initGeoapify() {
+            try {
+                // Verificar si ya está cargado en window
+                if (typeof window.autocomplete === 'undefined' || typeof window.autocomplete.GeocoderAutocomplete === 'undefined') {
+                    try {
+                        console.log("Cargando librería local...");
+                        await loadScript("{% static 'vendor/geoapify/index.min.js' %}");
+                    } catch (e) {
+                        console.error("Fallo al cargar librería local", e);
+                        throw new Error("No se pudo cargar el archivo local de mapas.");
+                    }
+                }
+
+                // Buscar la clase en el namespace 'autocomplete' o globalmente
+                const GeocoderAutocomplete = window.autocomplete?.GeocoderAutocomplete || window.GeocoderAutocomplete;
+
+                if (typeof GeocoderAutocomplete === 'undefined') {
+                    console.error("Contenido de window.autocomplete:", window.autocomplete);
+                    throw new Error("La clase GeocoderAutocomplete no está definida tras la carga.");
+                }
+
+                console.log("Inicializando GeocoderAutocomplete...");
+                // Limpiar indicador de carga
+                autocompleteContainer.innerHTML = '';
+
+                autocompleteWidget = new GeocoderAutocomplete(
+                    autocompleteContainer,
+                    myAPIKey,
+                    {
+                        lang: 'es',
+                        placeholder: 'Escribe la dirección aquí...',
+                        skipDetails: false,
+                        debounceDelay: 500,
+                        filter: {
+                            'countrycode': ["{{ GEOAPIFY_COUNTRY_CODE|default:'es' }}"]
+                        },
+                        bias: {
+                            'proximity': {
+                                'lon': parseFloat("{{ GEOAPIFY_BIAS_LON|default:'-3.703790' }}".replace(',', '.')),
+                                'lat': parseFloat("{{ GEOAPIFY_BIAS_LAT|default:'40.416775' }}".replace(',', '.'))
+                            }
+                        }
+                    }
+                );
+
+                const addressInput = document.getElementById("{{ form.lugar_direccion.id_for_label }}");
+
+                // Pre-llenar si hay valor
+                if (addressInput.value) {
+                    autocompleteWidget.setValue(addressInput.value);
+                }
+
+                autocompleteWidget.on('select', (location) => {
+                    console.log("Dirección seleccionada:", location);
+                    if (location) {
+                        addressInput.value = location.properties.formatted;
+                        updatePreview();
+                    }
+                });
+
+                console.log("Geoapify inicializado correctamente");
+
+            } catch (e) {
+                enableManualMode("Error: " + e.message);
+            }
+        }
+
+        // Iniciar proceso
+        initGeoapify();
     }
 
-    // Configurar otros campos
-    const evaluacionInput = document.getElementById('{{ form.evaluacion.id_for_label }}');
-    if (evaluacionInput) {
-        evaluacionInput.type = 'number';
-        evaluacionInput.min = '1';
-        evaluacionInput.max = '5';
-        evaluacionInput.classList.add('form-control');
+    // Configurar campos de fecha y hora
+    const fechaInput = document.getElementById('{{ form.fecha_dia.id_for_label }}');
+    if (fechaInput) {
+        fechaInput.type = 'date';
+        fechaInput.classList.add('form-control');
+    }
+    
+    const horaInput = document.getElementById('{{ form.hora_inicio.id_for_label }}');
+    if (horaInput) {
+        horaInput.setAttribute('type', 'time');
+        horaInput.setAttribute('step', '300'); // 5 minutos
+        horaInput.classList.add('form-control');
     }
 
     // Añadir clases CSS a todos los campos del formulario
-    const formControls = ['nombre', 'descripcion', 'duracion', 'lugar', 'observaciones'];
+    const formControls = ['nombre', 'descripcion', 'lugar_nombre', 'lugar_direccion', 'observaciones', 'duracion_cantidad', 'duracion_unidad'];
     formControls.forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
-            field.classList.add('form-control');
+            if (fieldName !== 'duracion_unidad') {
+                field.classList.add('form-control');
+            }
             if (fieldName === 'descripcion' || fieldName === 'observaciones') {
                 field.rows = 3;
             }
         }
     });
 
+    // --- Autocomplete Lugar Nombre (Backend) ---
+    const lugarNombreInput = document.getElementById('id_lugar_nombre');
+    const lugarDireccionInput = document.getElementById('id_lugar_direccion');
+    
+    if (lugarNombreInput) {
+        const datalistId = 'lugares-list';
+        let datalist = document.createElement('datalist');
+        datalist.id = datalistId;
+        document.body.appendChild(datalist);
+        lugarNombreInput.setAttribute('list', datalistId);
+
+        lugarNombreInput.addEventListener('input', function() {
+            const query = this.value;
+            if (query.length < 2) return;
+
+            fetch(`/api/v1/lugares/buscar?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    datalist.innerHTML = '';
+                    data.forEach(lugar => {
+                        const option = document.createElement('option');
+                        option.value = lugar.nombre;
+                        datalist.appendChild(option);
+                    });
+                    
+                    // Si hay coincidencia exacta, rellenar dirección
+                    const match = data.find(l => l.nombre.toLowerCase() === query.toLowerCase());
+                    if (match) {
+                        console.log("Lugar encontrado en BD:", match);
+                        if (lugarDireccionInput) {
+                            lugarDireccionInput.value = match.direccion;
+                        }
+                        if (autocompleteWidget) {
+                            autocompleteWidget.setValue(match.direccion);
+                        }
+                        updatePreview();
+                    }
+                })
+                .catch(err => console.error('Error buscando lugares:', err));
+        });
+    }
+
     // Vista previa dinámica
     function updatePreview() {
         const nombre = document.getElementById('id_nombre').value || 'Nombre del evento';
-        const fecha = document.getElementById('id_fecha').value;
-        const lugar = document.getElementById('id_lugar').value || 'Lugar por definir';
-        const evaluacion = document.getElementById('id_evaluacion').value;
+        const fechaDia = document.getElementById('id_fecha_dia').value;
+        const horaInicio = document.getElementById('id_hora_inicio').value;
+        const lugarNombre = document.getElementById('id_lugar_nombre').value;
+        const lugarDireccion = document.getElementById('id_lugar_direccion').value;
+
+        let lugarTexto = '📍 Lugar por definir';
+        if (lugarNombre && lugarDireccion) {
+            lugarTexto = '📍 ' + lugarNombre + ' (' + lugarDireccion + ')';
+        } else if (lugarNombre) {
+            lugarTexto = '📍 ' + lugarNombre;
+        } else if (lugarDireccion) {
+            lugarTexto = '📍 ' + lugarDireccion;
+        }
 
         document.getElementById('preview-nombre').textContent = nombre;
 
-        if (fecha) {
-            const fechaObj = new Date(fecha);
+        if (fechaDia && horaInicio) {
+            const fechaObj = new Date(fechaDia + 'T' + horaInicio);
             const fechaFormat = fechaObj.toLocaleDateString('es-ES', {
                 year: 'numeric',
                 month: 'long',
@@ -296,24 +544,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 minute: '2-digit'
             });
             document.getElementById('preview-fecha').innerHTML = '📅 ' + fechaFormat;
+        } else if (fechaDia) {
+             const fechaObj = new Date(fechaDia);
+             const fechaFormat = fechaObj.toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('preview-fecha').innerHTML = '📅 ' + fechaFormat + ' (Hora por definir)';
         }
 
-        document.getElementById('preview-lugar').innerHTML = '📍 ' + lugar;
-
-        if (evaluacion) {
-            let evaluacionElement = document.getElementById('preview-evaluacion');
-            if (!evaluacionElement) {
-                evaluacionElement = document.createElement('p');
-                evaluacionElement.id = 'preview-evaluacion';
-                evaluacionElement.className = 'text-muted';
-                document.getElementById('preview-content').appendChild(evaluacionElement);
-            }
-            evaluacionElement.innerHTML = '⭐ ' + evaluacion + '/5';
-        }
+        document.getElementById('preview-lugar').innerHTML = lugarTexto;
     }
 
     // Escuchar cambios en los campos para actualizar vista previa
-    ['nombre', 'fecha', 'lugar', 'evaluacion'].forEach(function(fieldName) {
+    ['nombre', 'fecha_dia', 'hora_inicio', 'lugar_nombre', 'lugar_direccion'].forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
             field.addEventListener('input', updatePreview);

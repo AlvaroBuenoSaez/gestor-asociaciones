@@ -5,7 +5,15 @@ Organizadas por categorías de funcionalidad
 from django.urls import path, include
 from . import views
 from .views_auth import user_login, user_logout, home
-from .views_dashboard import dashboard, drive_config, drive_files, drive_callback
+from .views_dashboard import (
+    dashboard, drive_callback,
+    backend_management, drive_upload, drive_delete, drive_create_folder, drive_select_folder,
+    export_socias, import_socias, delete_all_socias,
+    export_global_excel, import_global_excel,
+    export_finanzas, import_finanzas, delete_all_finanzas,
+    export_eventos, import_eventos, delete_all_eventos,
+    export_proyectos, import_proyectos, delete_all_proyectos
+)
 from .views_users import usuarios_web, crear_usuario_web, editar_usuario_web, eliminar_usuario_web
 
 app_name = "users"
@@ -24,9 +32,40 @@ auth_patterns = [
 # =============================================================================
 dashboard_patterns = [
     path("dashboard/", dashboard, name="dashboard"),
-    path("dashboard/drive/config/", drive_config, name="drive_config"),
+
+    # Gestión Backend Unificada
+    path("dashboard/backend/", backend_management, name="backend_management"),
+
+    # Acciones Drive
     path("dashboard/drive/callback/", drive_callback, name="drive_callback"),
-    path("dashboard/drive/files/", drive_files, name="drive_files"),
+    path("dashboard/drive/upload/", drive_upload, name="drive_upload"),
+    path("dashboard/drive/delete/", drive_delete, name="drive_delete"),
+    path("dashboard/drive/create-folder/", drive_create_folder, name="drive_create_folder"),
+    path("dashboard/drive/select-folder/", drive_select_folder, name="drive_select_folder"),
+
+    # Acciones Datos - Global
+    path("dashboard/data/global/export/", export_global_excel, name="export_global_excel"),
+    path("dashboard/data/global/import/", import_global_excel, name="import_global_excel"),
+
+    # Acciones Datos - Socias
+    path("dashboard/data/socias/export/", export_socias, name="export_socias"),
+    path("dashboard/data/socias/import/", import_socias, name="import_socias"),
+    path("dashboard/data/socias/delete-all/", delete_all_socias, name="delete_all_socias"),
+
+    # Acciones Datos - Finanzas
+    path("dashboard/data/finanzas/export/", export_finanzas, name="export_finanzas"),
+    path("dashboard/data/finanzas/import/", import_finanzas, name="import_finanzas"),
+    path("dashboard/data/finanzas/delete-all/", delete_all_finanzas, name="delete_all_finanzas"),
+
+    # Acciones Datos - Eventos
+    path("dashboard/data/eventos/export/", export_eventos, name="export_eventos"),
+    path("dashboard/data/eventos/import/", import_eventos, name="import_eventos"),
+    path("dashboard/data/eventos/delete-all/", delete_all_eventos, name="delete_all_eventos"),
+
+    # Acciones Datos - Proyectos
+    path("dashboard/data/proyectos/export/", export_proyectos, name="export_proyectos"),
+    path("dashboard/data/proyectos/import/", import_proyectos, name="import_proyectos"),
+    path("dashboard/data/proyectos/delete-all/", delete_all_proyectos, name="delete_all_proyectos"),
 ]
 
 # =============================================================================
