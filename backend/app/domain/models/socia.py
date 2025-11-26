@@ -7,7 +7,11 @@ class SociaBase(BaseModel):
     nombre: str
     apellidos: str
     telefono: Optional[str] = None
+    email: Optional[str] = None
     direccion: Optional[str] = None
+    numero: Optional[str] = None
+    piso: Optional[str] = None
+    escalera: Optional[str] = None
     provincia: Optional[str] = None
     codigo_postal: Optional[str] = None
     pais: Optional[str] = "España"
@@ -23,7 +27,11 @@ class SociaUpdate(BaseModel):
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
     telefono: Optional[str] = None
+    email: Optional[str] = None
     direccion: Optional[str] = None
+    numero: Optional[str] = None
+    piso: Optional[str] = None
+    escalera: Optional[str] = None
     provincia: Optional[str] = None
     codigo_postal: Optional[str] = None
     pais: Optional[str] = None

@@ -2,68 +2,165 @@
 
 {% block title %}Dashboard - {{ asociacion.nombre }}{% endblock %}
 
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-icon {
+        position: absolute;
+        right: -10px;
+        bottom: -10px;
+        font-size: 5rem;
+        opacity: 0.1;
+        transform: rotate(-15deg);
+    }
+    .action-card {
+        height: 100%;
+        transition: all 0.2s;
+        border: 1px solid #e2e8f0;
+    }
+    .action-card:hover {
+        border-color: var(--primary-color);
+        background-color: #f8fafc;
+        transform: translateY(-2px);
+    }
+    .welcome-banner {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #4338ca 100%);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--card-shadow);
+    }
+</style>
+{% endblock %}
+
 {% block dashboard_content %}
-<div class="row">
-    <div class="col-12">
-        <h1>Bienvenido a {{ asociacion.nombre }}</h1>
-        <p class="text-muted">Tu rol: <strong>{{ is_admin|yesno:"Administrador,Miembro" }}</strong></p>
+<!-- Welcome Banner -->
+<div class="welcome-banner d-flex align-items-center justify-content-between flex-wrap gap-3">
+    <div>
+        <h1 class="h2 fw-bold mb-1">Hola, {{ user.first_name|default:user.username }} 👋</h1>
+        <p class="mb-0 opacity-75">Bienvenido al panel de gestión de <strong>{{ asociacion.nombre }}</strong></p>
+    </div>
+    <div class="badge bg-white text-primary px-3 py-2 rounded-pill shadow-sm">
+        <i class="bi bi-shield-check me-1"></i> {{ is_admin|yesno:"Administrador,Miembro" }}
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card text-center">
+<!-- Stats Grid -->
+<div class="row g-4 mb-5">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card bg-white h-100">
             <div class="card-body">
-                <h3>{{ total_members }}</h3>
-                <p>Miembros</p>
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Miembros Activos</h6>
+                <h2 class="display-5 fw-bold text-primary mb-0">{{ total_members }}</h2>
+                <i class="bi bi-people-fill stat-icon text-primary"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card bg-white h-100">
             <div class="card-body">
-                <h3>-</h3>
-                <p>Actividades</p>
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Actividades</h6>
+                <h2 class="display-5 fw-bold text-success mb-0">-</h2>
+                <i class="bi bi-calendar-check-fill stat-icon text-success"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card bg-white h-100">
             <div class="card-body">
-                <h3>-</h3>
-                <p>Balance</p>
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Balance</h6>
+                <h2 class="display-5 fw-bold text-warning mb-0">-</h2>
+                <i class="bi bi-wallet2 stat-icon text-warning"></i>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-center">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stat-card bg-white h-100">
             <div class="card-body">
-                <h3>-</h3>
-                <p>Mapas</p>
+                <h6 class="text-muted text-uppercase small fw-bold mb-2">Mapas</h6>
+                <h2 class="display-5 fw-bold text-info mb-0">-</h2>
+                <i class="bi bi-map-fill stat-icon text-info"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-12">
-        <h3>Accesos rápidos</h3>
-        <div class="list-group">
-            <a href="{% url 'socias:list' %}" class="list-group-item list-group-item-action">
-                👥 Gestionar Socias
-            </a>
-            <a href="{% url 'finanzas:dashboard' %}" class="list-group-item list-group-item-action">
-                💰 Ver Contabilidad
-            </a>
-            <a href="{% url 'eventos:list' %}" class="list-group-item list-group-item-action">
-                🎯 Ver Actividades
-            </a>
-            {% if is_admin %}
-            <a href="{% url 'users:usuarios_web' %}" class="list-group-item list-group-item-action">
-                ⚙️ Gestionar Usuarios Web
-            </a>
-            {% endif %}
-        </div>
+<!-- Quick Actions -->
+<h4 class="fw-bold mb-3 text-secondary"><i class="bi bi-lightning-charge-fill me-2"></i>Accesos Rápidos</h4>
+<div class="row g-3">
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'socias:list' %}" class="text-decoration-none">
+            <div class="card action-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3 text-primary">
+                        <i class="bi bi-people fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Gestionar Socias</h6>
+                        <p class="small text-muted mb-0">Ver listado, altas y bajas</p>
+                    </div>
+                </div>
+            </div>
+        </a>
     </div>
+    
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'finanzas:dashboard' %}" class="text-decoration-none">
+            <div class="card action-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3 text-success">
+                        <i class="bi bi-cash-coin fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Contabilidad</h6>
+                        <p class="small text-muted mb-0">Ingresos y gastos</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'eventos:list' %}" class="text-decoration-none">
+            <div class="card action-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3 text-warning">
+                        <i class="bi bi-calendar-event fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Actividades</h6>
+                        <p class="small text-muted mb-0">Calendario de eventos</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {% if is_admin %}
+    <div class="col-md-6 col-lg-4">
+        <a href="{% url 'users:usuarios_web' %}" class="text-decoration-none">
+            <div class="card action-card p-3">
+                <div class="d-flex align-items-center">
+                    <div class="rounded-circle bg-secondary bg-opacity-10 p-3 me-3 text-secondary">
+                        <i class="bi bi-person-gear fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-1 text-dark">Usuarios Web</h6>
+                        <p class="small text-muted mb-0">Administrar accesos</p>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

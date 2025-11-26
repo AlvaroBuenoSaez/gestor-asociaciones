@@ -17,6 +17,9 @@
                     <a href="{% url 'socias:create' %}" class="btn btn-primary">
                         ➕ Nueva Socia
                     </a>
+                    <button type="button" class="btn btn-outline-secondary" onclick="copyEmails()">
+                        📧 Copiar Emails
+                    </button>
                     <button type="button" class="btn btn-outline-secondary">
                         📤 Exportar
                     </button>
@@ -345,5 +348,39 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+function copyEmails() {
+    // Obtener todos los emails de la página actual (o idealmente de todas las socias filtradas)
+    // Como estamos en el cliente, solo podemos acceder a los visibles o hacer una petición AJAX.
+    // Para simplificar y ser robusto, haremos una petición rápida al backend para obtener solo los emails.
+    
+    const currentUrl = new URL(window.location.href);
+    const params = new URLSearchParams(currentUrl.search);
+    params.append('export_emails', 'true');
+    
+    fetch(`${currentUrl.pathname}?${params.toString()}`, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.emails && data.emails.length > 0) {
+            const emailString = data.emails.join(', ');
+            navigator.clipboard.writeText(emailString).then(() => {
+                alert(`✅ ${data.emails.length} correos copiados al portapapeles.\n\nAhora puedes pegarlos en el campo CCO (Copia Oculta) de tu gestor de correo.`);
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert('❌ Error al copiar al portapapeles. Inténtalo de nuevo.');
+            });
+        } else {
+            alert('⚠️ No se encontraron correos electrónicos con los filtros actuales.');
+        }
+    })
+    .catch(err => {
+        console.error('Error:', err);
+        alert('❌ Error al obtener los correos.');
+    });
+}
 </script>
 {% endblock %}

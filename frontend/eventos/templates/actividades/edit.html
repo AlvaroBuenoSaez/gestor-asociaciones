@@ -216,7 +216,7 @@
                                                 <small>Introduce la dirección manualmente.</small>
                                             </div>
                                         {% endif %}
-                                        
+
                                         {% if form.lugar_direccion.errors %}
                                             <div class="text-danger small mt-1">{{ form.lugar_direccion.errors.0 }}</div>
                                         {% endif %}
@@ -451,7 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fechaInput.type = 'date';
         fechaInput.classList.add('form-control');
     }
-    
+
     const horaInput = document.getElementById('{{ form.hora_inicio.id_for_label }}');
     if (horaInput) {
         horaInput.setAttribute('type', 'time');
@@ -476,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Autocomplete Lugar Nombre (Backend) ---
     const lugarNombreInput = document.getElementById('id_lugar_nombre');
     const lugarDireccionInput = document.getElementById('id_lugar_direccion');
-    
+
     if (lugarNombreInput) {
         const datalistId = 'lugares-list';
         let datalist = document.createElement('datalist');
@@ -497,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         option.value = lugar.nombre;
                         datalist.appendChild(option);
                     });
-                    
+
                     // Si hay coincidencia exacta, rellenar dirección
                     const match = data.find(l => l.nombre.toLowerCase() === query.toLowerCase());
                     if (match) {

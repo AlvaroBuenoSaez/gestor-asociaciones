@@ -19,13 +19,14 @@ class SqlAlchemyEventoRepository(EventoRepository):
             id=db_evento.id,
             asociacion_id=db_evento.asociacion_id,
             responsable_id=db_evento.responsable_id,
+            proyecto_id=db_evento.proyecto_id,
             nombre=db_evento.nombre,
             descripcion=db_evento.descripcion,
-            lugar=db_evento.lugar,
+            lugar_nombre=db_evento.lugar_nombre,
+            lugar_direccion=db_evento.lugar_direccion,
             fecha=db_evento.fecha,
             duracion=duracion_td,
             colaboradores=db_evento.colaboradores,
-            evaluacion=db_evento.evaluacion,
             observaciones=db_evento.observaciones
         )
 
@@ -49,13 +50,14 @@ class SqlAlchemyEventoRepository(EventoRepository):
             db_evento = EventoModel(
                 asociacion_id=evento.asociacion_id,
                 responsable_id=evento.responsable_id,
+                proyecto_id=evento.proyecto_id,
                 nombre=evento.nombre,
                 descripcion=evento.descripcion,
-                lugar=evento.lugar,
+                lugar_nombre=evento.lugar_nombre,
+                lugar_direccion=evento.lugar_direccion,
                 fecha=evento.fecha,
                 duracion=duracion_us,
                 colaboradores=evento.colaboradores,
-                evaluacion=evento.evaluacion,
                 observaciones=evento.observaciones
             )
             self.db.add(db_evento)

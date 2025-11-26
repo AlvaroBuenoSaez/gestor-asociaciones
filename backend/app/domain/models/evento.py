@@ -5,32 +5,35 @@ from datetime import datetime, timedelta
 class EventoBase(BaseModel):
     nombre: str
     descripcion: Optional[str] = None
-    lugar: Optional[str] = None
+    lugar_nombre: Optional[str] = None
+    lugar_direccion: Optional[str] = None
     fecha: datetime
     duracion: Optional[timedelta] = None
     colaboradores: Optional[str] = None
-    evaluacion: Optional[int] = Field(None, ge=1, le=5)
     observaciones: Optional[str] = None
 
 class EventoCreate(EventoBase):
     asociacion_id: int
     responsable_id: int
+    proyecto_id: Optional[int] = None
 
 class EventoUpdate(BaseModel):
     nombre: Optional[str] = None
     descripcion: Optional[str] = None
-    lugar: Optional[str] = None
+    lugar_nombre: Optional[str] = None
+    lugar_direccion: Optional[str] = None
     fecha: Optional[datetime] = None
     duracion: Optional[timedelta] = None
     colaboradores: Optional[str] = None
-    evaluacion: Optional[int] = Field(None, ge=1, le=5)
     observaciones: Optional[str] = None
     responsable_id: Optional[int] = None
+    proyecto_id: Optional[int] = None
 
 class Evento(EventoBase):
     id: int
     asociacion_id: int
-    responsable_id: int
+    responsable_id: Optional[int] = None
+    proyecto_id: Optional[int] = None
 
     class Config:
         from_attributes = True

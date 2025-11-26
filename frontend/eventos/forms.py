@@ -57,7 +57,7 @@ class EventoForm(forms.ModelForm):
             # Filtrar responsables (socias) por asociación
             from socias.models import Socia
             self.fields['responsable'].queryset = Socia.objects.filter(asociacion=self.asociacion)
-            
+
             # Filtrar proyectos por asociación
             from proyectos.models import Proyecto
             self.fields['proyecto'].queryset = Proyecto.objects.filter(asociacion=self.asociacion)
@@ -113,14 +113,14 @@ class EventoForm(forms.ModelForm):
 
     def save(self, commit=True):
         instance = super().save(commit=False)
-        
+
         # Asignar valores calculados en clean()
         if 'fecha' in self.cleaned_data:
             instance.fecha = self.cleaned_data['fecha']
-        
+
         if 'duracion' in self.cleaned_data:
             instance.duracion = self.cleaned_data['duracion']
-            
+
         if commit:
             instance.save()
         return instance

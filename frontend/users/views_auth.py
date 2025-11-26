@@ -25,6 +25,10 @@ def user_login(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, f'¡Bienvenido/a, {user.get_full_name() or user.username}!')
+                
+                next_url = request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
                 return redirect('users:home')
     else:
         form = AuthenticationForm()

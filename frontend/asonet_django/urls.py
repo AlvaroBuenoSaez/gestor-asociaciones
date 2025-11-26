@@ -17,8 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.shortcuts import redirect
+from users.views_auth import user_login, user_logout
 
 urlpatterns = [
+    path('admin/login/', user_login),
+    path('admin/logout/', user_logout),
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('users:home')),
     path('users/', include('users.urls')),

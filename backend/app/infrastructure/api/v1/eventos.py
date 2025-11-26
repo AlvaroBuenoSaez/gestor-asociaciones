@@ -4,6 +4,7 @@ from typing import List
 
 from app.infrastructure.persistence.database import get_db
 from app.infrastructure.persistence.repositories.evento_repository_impl import SqlAlchemyEventoRepository
+from app.infrastructure.persistence.repositories.lugar_repository_impl import SqlAlchemyLugarRepository
 from app.application.services.evento_service import EventoService
 from app.domain.models.evento import Evento, EventoCreate, EventoUpdate
 
@@ -14,7 +15,8 @@ router = APIRouter(
 
 def get_evento_service(db: Session = Depends(get_db)) -> EventoService:
     repository = SqlAlchemyEventoRepository(db)
-    return EventoService(repository)
+    lugar_repository = SqlAlchemyLugarRepository(db)
+    return EventoService(repository, lugar_repository)
 
 @router.post("/", response_model=Evento, status_code=status.HTTP_201_CREATED)
 def create_evento(

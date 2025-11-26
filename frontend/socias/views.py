@@ -24,6 +24,7 @@ def list_socias(request):
     provincia = request.GET.get('provincia', '')
     sort = request.GET.get('sort', 'numero_socia')
     page_number = request.GET.get('page', 1)
+    export_emails = request.GET.get('export_emails') == 'true'
 
     # Construir query params
     params = {
@@ -62,6 +63,12 @@ def list_socias(request):
             continue
 
         filtered_socias.append(s)
+
+    # Si se solicitan emails, devolver JSON
+    if export_emails:
+        from django.http import JsonResponse
+        emails = [s.get('email') for s in filtered_socias if s.get('email')]
+        return JsonResponse({'emails': emails})
 
     # Ordenamiento
     reverse = False
@@ -119,6 +126,7 @@ def create_socia(request):
                 "nombre": data['nombre'],
                 "apellidos": data['apellidos'],
                 "telefono": data['telefono'],
+                "email": data.get('email'),
                 "direccion": data['direccion'],
                 "numero": data.get('numero'),
                 "piso": data.get('piso'),
@@ -174,6 +182,7 @@ def update_socia(request, pk):
         nombre=socia_data['nombre'],
         apellidos=socia_data['apellidos'],
         telefono=socia_data['telefono'],
+        email=socia_data.get('email'),
         direccion=socia_data['direccion'],
         numero=socia_data.get('numero'),
         piso=socia_data.get('piso'),
@@ -201,6 +210,7 @@ def update_socia(request, pk):
                 "nombre": data['nombre'],
                 "apellidos": data['apellidos'],
                 "telefono": data['telefono'],
+                "email": data.get('email'),
                 "direccion": data['direccion'],
                 "numero": data.get('numero'),
                 "piso": data.get('piso'),
