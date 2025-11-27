@@ -44,7 +44,7 @@ class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
         fields = [
-            'nombre', 'responsable', 'proyecto', 'descripcion', 
+            'nombre', 'responsable', 'proyecto', 'descripcion',
             'lugar', 'lugar_nombre', 'lugar_direccion',
             'socias_involucradas', 'personas_involucradas', 'materiales_utilizados',
             'observaciones'
@@ -76,7 +76,7 @@ class EventoForm(forms.ModelForm):
             # Filtrar proyectos por asociación
             from proyectos.models import Proyecto
             self.fields['proyecto'].queryset = Proyecto.objects.filter(asociacion=self.asociacion)
-            
+
             # Filtrar entidades y lugares
             self.fields['personas_involucradas'].queryset = Persona.objects.filter(asociacion=self.asociacion)
             self.fields['materiales_utilizados'].queryset = Material.objects.filter(asociacion=self.asociacion)

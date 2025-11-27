@@ -105,7 +105,7 @@
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
                                         <label class="form-label fw-bold">👥 Personas Involucradas</label>
-                                        
+
                                         <div class="mb-2">
                                             <label for="{{ form.socias_involucradas.id_for_label }}" class="form-label small text-muted">Socias</label>
                                             {{ form.socias_involucradas }}
@@ -322,7 +322,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         const fechaInicio = document.getElementById('id_fecha_inicio').value;
-        
+
         // Obtener texto del lugar seleccionado
         const lugarSelect = document.getElementById('{{ form.lugar_fk.id_for_label }}');
         let lugar = 'Lugar por definir';
@@ -364,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
             field.addEventListener('change', updatePreview);
         }
     });
-    
+
     // Escuchar cambios en Tom Select de lugar
     const lugarSelect = document.getElementById('{{ form.lugar_fk.id_for_label }}');
     if (lugarSelect) {

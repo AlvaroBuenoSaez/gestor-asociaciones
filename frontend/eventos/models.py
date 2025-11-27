@@ -35,7 +35,7 @@ class Evento(models.Model):
     # Datos básicos
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
-    
+
     # Ubicación
     lugar_nombre = models.CharField(max_length=300, blank=True, verbose_name="Nombre del Lugar (Texto)", help_text="Ej: Centro Cívico, Plaza Mayor...")
     lugar_direccion = models.CharField(max_length=500, blank=True, verbose_name="Dirección del Lugar")
@@ -62,7 +62,7 @@ class Evento(models.Model):
         blank=True,
         help_text="Lista de colaboradores o entidades que participaron (Texto libre)"
     )
-    
+
     # Relaciones con personas y socias
     socias_involucradas = models.ManyToManyField(
         'socias.Socia',
@@ -76,7 +76,7 @@ class Evento(models.Model):
         related_name='eventos_involucrada',
         help_text="Personas externas que participan en el evento"
     )
-    
+
     # Materiales
     materiales_utilizados = models.ManyToManyField(
         'entidades.Material',

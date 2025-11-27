@@ -20,7 +20,7 @@ class QuickCreateBaseView(AssociationRequiredMixin, AutoAssignAssociationMixin, 
         self.object = form.save(commit=False)
         self.object.asociacion = self.request.user.profile.asociacion
         self.object.save()
-        
+
         # Guardar M2M si existen
         form.save_m2m()
 

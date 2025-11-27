@@ -22,18 +22,18 @@ window.openQuickCreate = function(url, title, targetSelectId) {
             return;
         }
     }
-    
+
     currentTargetSelectId = targetSelectId;
     const modalTitle = document.getElementById('quickCreateTitle');
     const modalBody = document.getElementById('quickCreateBody');
-    
+
     if (modalTitle) modalTitle.textContent = title;
-    
+
     if (modalBody) {
         modalBody.innerHTML = '<div class="text-center py-3"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></div>';
-        
+
         quickCreateModal.show();
-        
+
         fetch(url)
             .then(response => response.text())
             .then(html => {
@@ -55,7 +55,7 @@ function handleQuickCreateSubmit(e) {
     e.preventDefault();
     const form = e.target;
     const formData = new FormData(form);
-    
+
     fetch(form.action, {
         method: 'POST',
         body: formData,
@@ -68,7 +68,7 @@ function handleQuickCreateSubmit(e) {
         if (data.success) {
             // Close modal
             if (quickCreateModal) quickCreateModal.hide();
-            
+
             // Add to Tom Select
             if (currentTargetSelectId) {
                 const selectEl = document.getElementById(currentTargetSelectId);

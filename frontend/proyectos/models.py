@@ -29,7 +29,7 @@ class Proyecto(models.Model):
         blank=True,
         help_text="Lista de personas involucradas en el proyecto (Texto libre)"
     )
-    
+
     # Relaciones con personas y socias
     socias_involucradas = models.ManyToManyField(
         'socias.Socia',
