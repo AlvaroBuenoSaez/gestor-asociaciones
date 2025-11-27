@@ -3,6 +3,7 @@
 {% block title %}Nuevo Proyecto - Dashboard{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 <style>
     .form-card {
         border: none;
@@ -29,6 +30,11 @@
     }
     .checkbox-recursivo {
         transform: scale(1.2);
+    }
+    /* Tom Select adjustments */
+    .ts-control {
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
     }
 </style>
 {% endblock %}
@@ -95,41 +101,59 @@
                                     </div>
                                 </div>
 
-                                <!-- Involucrados -->
+                                <!-- Involucrados (Socias y Personas) -->
                                 <div class="row">
                                     <div class="col-md-12 mb-3">
-                                        <label for="{{ form.involucrados.id_for_label }}" class="form-label">
-                                            {{ form.involucrados.label }}
-                                        </label>
-                                        {{ form.involucrados }}
-                                        {% if form.involucrados.errors %}
-                                            <div class="text-danger small mt-1">{{ form.involucrados.errors.0 }}</div>
-                                        {% endif %}
-                                        <div class="form-text">Lista de personas que participan en el proyecto</div>
+                                        <label class="form-label fw-bold">👥 Personas Involucradas</label>
+                                        
+                                        <div class="mb-2">
+                                            <label for="{{ form.socias_involucradas.id_for_label }}" class="form-label small text-muted">Socias</label>
+                                            {{ form.socias_involucradas }}
+                                            {% if form.socias_involucradas.errors %}
+                                                <div class="text-danger small mt-1">{{ form.socias_involucradas.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="mb-2">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <label for="{{ form.personas_involucradas.id_for_label }}" class="form-label small text-muted">Personas Externas</label>
+                                                <button type="button" class="btn btn-sm btn-outline-primary mb-1" onclick="openQuickCreate('{% url 'entidades:quick_persona_create' %}', 'Nueva Persona Externa', '{{ form.personas_involucradas.id_for_label }}')">+ Nueva</button>
+                                            </div>
+                                            {{ form.personas_involucradas }}
+                                            {% if form.personas_involucradas.errors %}
+                                                <div class="text-danger small mt-1">{{ form.personas_involucradas.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
 
                                 <!-- Materiales y lugar -->
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ form.materiales.id_for_label }}" class="form-label">
-                                            {{ form.materiales.label }}
-                                        </label>
-                                        {{ form.materiales }}
-                                        {% if form.materiales.errors %}
-                                            <div class="text-danger small mt-1">{{ form.materiales.errors.0 }}</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label for="{{ form.materiales_necesarios.id_for_label }}" class="form-label">
+                                                {{ form.materiales_necesarios.label }}
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mb-1" onclick="openQuickCreate('{% url 'entidades:quick_material_create' %}', 'Nuevo Material', '{{ form.materiales_necesarios.id_for_label }}')">+ Nuevo</button>
+                                        </div>
+                                        {{ form.materiales_necesarios }}
+                                        {% if form.materiales_necesarios.errors %}
+                                            <div class="text-danger small mt-1">{{ form.materiales_necesarios.errors.0 }}</div>
                                         {% endif %}
                                         <div class="form-text">Recursos y materiales necesarios</div>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ form.lugar.id_for_label }}" class="form-label">
-                                            {{ form.lugar.label }}
-                                        </label>
-                                        {{ form.lugar }}
-                                        {% if form.lugar.errors %}
-                                            <div class="text-danger small mt-1">{{ form.lugar.errors.0 }}</div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <label for="{{ form.lugar_fk.id_for_label }}" class="form-label">
+                                                {{ form.lugar_fk.label }}
+                                            </label>
+                                            <button type="button" class="btn btn-sm btn-outline-primary mb-1" onclick="openQuickCreate('{% url 'entidades:quick_lugar_create' %}', 'Nuevo Lugar', '{{ form.lugar_fk.id_for_label }}')">+ Nuevo</button>
+                                        </div>
+                                        {{ form.lugar_fk }}
+                                        {% if form.lugar_fk.errors %}
+                                            <div class="text-danger small mt-1">{{ form.lugar_fk.errors.0 }}</div>
                                         {% endif %}
-                                        <div class="form-text">Ubicación donde se desarrolla</div>
+                                        <div class="form-text">Ubicación registrada</div>
                                     </div>
                                 </div>
 
@@ -232,12 +256,28 @@
             </form>
         </div>
     </div>
+    <!-- Quick Create Modal -->
+    {% include 'components/quick_create_modal.html' %}
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="{% static 'js/quick_create.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar Tom Select
+    const tsOptions = {
+        plugins: ['remove_button'],
+        create: false,
+        maxOptions: null
+    };
+
+    new TomSelect("#{{ form.socias_involucradas.id_for_label }}", { ...tsOptions, placeholder: 'Seleccionar socias...' });
+    new TomSelect("#{{ form.personas_involucradas.id_for_label }}", { ...tsOptions, placeholder: 'Seleccionar personas externas...' });
+    new TomSelect("#{{ form.materiales_necesarios.id_for_label }}", { ...tsOptions, placeholder: 'Seleccionar materiales...' });
+    new TomSelect("#{{ form.lugar_fk.id_for_label }}", { create: false, placeholder: 'Seleccionar lugar...' });
+
     // Configurar campos de fecha
     const fechaInicioInput = document.getElementById('{{ form.fecha_inicio.id_for_label }}');
     const fechaFinalInput = document.getElementById('{{ form.fecha_final.id_for_label }}');
@@ -259,12 +299,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Añadir clases CSS a todos los campos del formulario
-    const formControls = ['nombre', 'responsable', 'descripcion', 'involucrados', 'materiales', 'lugar'];
+    const formControls = ['nombre', 'responsable', 'descripcion'];
     formControls.forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
             field.classList.add('form-control');
-            if (fieldName === 'descripcion' || fieldName === 'involucrados' || fieldName === 'materiales') {
+            if (fieldName === 'descripcion') {
                 field.rows = 3;
             }
         }
@@ -273,9 +313,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Vista previa dinámica
     function updatePreview() {
         const nombre = document.getElementById('id_nombre').value || 'Nombre del proyecto';
-        const responsable = document.getElementById('id_responsable').value || 'Responsable';
+
+        const responsableSelect = document.getElementById('id_responsable');
+        let responsable = 'Responsable';
+        if (responsableSelect && responsableSelect.selectedIndex >= 0) {
+            responsable = responsableSelect.options[responsableSelect.selectedIndex].text;
+            if (responsable.includes('---------')) responsable = 'Responsable';
+        }
+
         const fechaInicio = document.getElementById('id_fecha_inicio').value;
-        const lugar = document.getElementById('id_lugar').value || 'Lugar por definir';
+        
+        // Obtener texto del lugar seleccionado
+        const lugarSelect = document.getElementById('{{ form.lugar_fk.id_for_label }}');
+        let lugar = 'Lugar por definir';
+        if (lugarSelect && lugarSelect.tomselect) {
+             const selected = lugarSelect.tomselect.getValue();
+             if (selected) {
+                 lugar = lugarSelect.tomselect.getItem(selected).textContent;
+             }
+        }
+
         const recursivo = document.getElementById('id_recursivo').checked;
 
         document.getElementById('preview-nombre').textContent = nombre;
@@ -300,13 +357,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Escuchar cambios en los campos para actualizar vista previa
-    ['nombre', 'responsable', 'fecha_inicio', 'lugar', 'recursivo'].forEach(function(fieldName) {
+    ['nombre', 'responsable', 'fecha_inicio', 'recursivo'].forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
             field.addEventListener('input', updatePreview);
             field.addEventListener('change', updatePreview);
         }
     });
+    
+    // Escuchar cambios en Tom Select de lugar
+    const lugarSelect = document.getElementById('{{ form.lugar_fk.id_for_label }}');
+    if (lugarSelect) {
+        lugarSelect.addEventListener('change', updatePreview);
+    }
 
     // Actualizar vista previa inicial
     updatePreview();
@@ -349,5 +412,7 @@ document.getElementById('proyectoForm').addEventListener('submit', function(e) {
         return;
     }
 });
+
+
 </script>
 {% endblock %}

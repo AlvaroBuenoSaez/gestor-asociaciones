@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     'finanzas',      # Contabilidad y finanzas
     'eventos',       # Actividades y eventos
     'proyectos',     # Gestión de proyectos
+    'entidades',     # Gestión de entidades y personas externas
 ]
 
 MIDDLEWARE = [

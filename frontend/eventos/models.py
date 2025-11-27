@@ -35,8 +35,19 @@ class Evento(models.Model):
     # Datos básicos
     nombre = models.CharField(max_length=200)
     descripcion = models.TextField(blank=True)
-    lugar_nombre = models.CharField(max_length=300, blank=True, verbose_name="Nombre del Lugar", help_text="Ej: Centro Cívico, Plaza Mayor...")
+    
+    # Ubicación
+    lugar_nombre = models.CharField(max_length=300, blank=True, verbose_name="Nombre del Lugar (Texto)", help_text="Ej: Centro Cívico, Plaza Mayor...")
     lugar_direccion = models.CharField(max_length=500, blank=True, verbose_name="Dirección del Lugar")
+    lugar = models.ForeignKey(
+        'eventos.Lugar',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='eventos',
+        verbose_name="Lugar (Selección)",
+        help_text="Seleccionar un lugar registrado"
+    )
 
     # Fechas y duración
     fecha = models.DateTimeField()
@@ -49,7 +60,29 @@ class Evento(models.Model):
     # Colaboradores y evaluación
     colaboradores = models.TextField(
         blank=True,
-        help_text="Lista de colaboradores o entidades que participaron"
+        help_text="Lista de colaboradores o entidades que participaron (Texto libre)"
+    )
+    
+    # Relaciones con personas y socias
+    socias_involucradas = models.ManyToManyField(
+        'socias.Socia',
+        blank=True,
+        related_name='eventos_involucrada',
+        help_text="Socias que participan en el evento"
+    )
+    personas_involucradas = models.ManyToManyField(
+        'entidades.Persona',
+        blank=True,
+        related_name='eventos_involucrada',
+        help_text="Personas externas que participan en el evento"
+    )
+    
+    # Materiales
+    materiales_utilizados = models.ManyToManyField(
+        'entidades.Material',
+        blank=True,
+        related_name='eventos',
+        help_text="Materiales utilizados en el evento"
     )
 
     # Observaciones adicionales
@@ -72,13 +105,27 @@ class Evento(models.Model):
 
 
 class Lugar(models.Model):
-    nombre = models.CharField(max_length=300, unique=True)
-    direccion = models.CharField(max_length=500)
+    asociacion = models.ForeignKey(
+        AsociacionVecinal,
+        on_delete=models.CASCADE,
+        related_name='lugares',
+        null=True
+    )
+    nombre = models.CharField(max_length=300)
+    direccion = models.CharField(max_length=500, blank=True)
+    descripcion = models.TextField(blank=True, help_text="Descripción del lugar y sus características")
+
+    # Campos de dirección desglosados (Geoapify)
+    numero = models.CharField(max_length=20, blank=True, verbose_name="Número")
+    cp = models.CharField(max_length=10, blank=True, verbose_name="Código Postal")
+    ciudad = models.CharField(max_length=100, blank=True)
+    pais = models.CharField(max_length=100, blank=True, default="España")
 
     class Meta:
         verbose_name = "Lugar"
         verbose_name_plural = "Lugares"
         db_table = "lugares"
+        unique_together = ['asociacion', 'nombre']
 
     def __str__(self):
         return self.nombre

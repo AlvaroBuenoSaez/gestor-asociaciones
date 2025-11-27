@@ -1,16 +1,25 @@
 from django import forms
-from .models import Evento
+from .models import Evento, Lugar
+from entidades.models import Persona, Material
 from datetime import datetime, timedelta
 
 class EventoForm(forms.ModelForm):
     # Campos personalizados para fecha y hora
     fecha_dia = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        widget=forms.DateInput(format='%Y-%m-%d', attrs={'type': 'date', 'class': 'form-control'}),
         label="Fecha"
     )
-    hora_inicio = forms.TimeField(
-        widget=forms.TimeInput(attrs={'type': 'time', 'class': 'form-control', 'step': '300'}),
-        label="Hora de inicio"
+
+    # Selectores de hora y minutos
+    hora = forms.ChoiceField(
+        choices=[(str(h).zfill(2), str(h).zfill(2)) for h in range(24)],
+        label="Hora",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    minutos = forms.ChoiceField(
+        choices=[(str(m).zfill(2), str(m).zfill(2)) for m in range(0, 60, 5)],
+        label="Minutos",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
 
     # Campos personalizados para duración
@@ -35,18 +44,23 @@ class EventoForm(forms.ModelForm):
     class Meta:
         model = Evento
         fields = [
-            'nombre', 'responsable', 'proyecto', 'descripcion', 'lugar_nombre', 'lugar_direccion',
-            'colaboradores', 'observaciones'
+            'nombre', 'responsable', 'proyecto', 'descripcion', 
+            'lugar', 'lugar_nombre', 'lugar_direccion',
+            'socias_involucradas', 'personas_involucradas', 'materiales_utilizados',
+            'observaciones'
         ]
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
             'responsable': forms.Select(attrs={'class': 'form-control'}),
             'proyecto': forms.Select(attrs={'class': 'form-control'}),
             'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-            'lugar_nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Centro Cívico'}),
-            'lugar_direccion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección completa'}),
-            'colaboradores': forms.TextInput(attrs={'class': 'form-control'}),
+            'lugar': forms.Select(attrs={'class': 'form-control'}),
+            'lugar_nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Centro Cívico (Si no está en lista)'}),
+            'lugar_direccion': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Dirección completa (Si no está en lista)'}),
             'observaciones': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'socias_involucradas': forms.SelectMultiple(attrs={'class': 'form-select'}),
+            'personas_involucradas': forms.SelectMultiple(attrs={'class': 'form-select'}),
+            'materiales_utilizados': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -57,16 +71,29 @@ class EventoForm(forms.ModelForm):
             # Filtrar responsables (socias) por asociación
             from socias.models import Socia
             self.fields['responsable'].queryset = Socia.objects.filter(asociacion=self.asociacion)
+            self.fields['socias_involucradas'].queryset = Socia.objects.filter(asociacion=self.asociacion)
 
             # Filtrar proyectos por asociación
             from proyectos.models import Proyecto
             self.fields['proyecto'].queryset = Proyecto.objects.filter(asociacion=self.asociacion)
+            
+            # Filtrar entidades y lugares
+            self.fields['personas_involucradas'].queryset = Persona.objects.filter(asociacion=self.asociacion)
+            self.fields['materiales_utilizados'].queryset = Material.objects.filter(asociacion=self.asociacion)
+            self.fields['lugar'].queryset = Lugar.objects.filter(asociacion=self.asociacion)
 
         # Inicializar campos personalizados si hay instancia
         if self.instance:
             if self.instance.fecha:
                 self.initial['fecha_dia'] = self.instance.fecha.date()
-                self.initial['hora_inicio'] = self.instance.fecha.time()
+                # Extraer hora y minutos
+                self.initial['hora'] = str(self.instance.fecha.hour).zfill(2)
+                # Redondear minutos al múltiplo de 5 más cercano o simplemente tomarlo
+                # Para ser consistentes con el selector, tomamos el valor exacto si existe en las opciones
+                # o el más cercano inferior
+                minuto = self.instance.fecha.minute
+                minuto_rounded = minuto - (minuto % 5)
+                self.initial['minutos'] = str(minuto_rounded).zfill(2)
 
             if self.instance.duracion:
                 total_seconds = self.instance.duracion.total_seconds()
@@ -86,9 +113,12 @@ class EventoForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         fecha_dia = cleaned_data.get('fecha_dia')
-        hora_inicio = cleaned_data.get('hora_inicio')
+        hora = cleaned_data.get('hora')
+        minutos = cleaned_data.get('minutos')
 
-        if fecha_dia and hora_inicio:
+        if fecha_dia and hora and minutos:
+            from datetime import time
+            hora_inicio = time(int(hora), int(minutos))
             fecha = datetime.combine(fecha_dia, hora_inicio)
             cleaned_data['fecha'] = fecha
             # Asignar a la instancia para pasar la validación del modelo

@@ -1,0 +1,87 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Lugares - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>📍 Lugares</h2>
+                    <p class="text-muted">Espacios donde se realizan las actividades</p>
+                </div>
+                <div>
+                    <a href="{% url 'entidades:dashboard' %}" class="btn btn-outline-secondary me-2">
+                        ← Volver
+                    </a>
+                    {% if is_admin %}
+                    <a href="{% url 'entidades:lugar_create' %}" class="btn btn-info text-white">
+                        ➕ Nuevo Lugar
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tabla -->
+            <div class="card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Dirección</th>
+                                    {% if is_admin %}<th>Acciones</th>{% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for lugar in lugares %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ lugar.nombre }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ lugar.direccion|default:"-" }}
+                                    </td>
+                                    {% if is_admin %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'entidades:lugar_update' lugar.pk %}" class="btn btn-outline-warning" title="Editar">✏️</a>
+                                            <a href="{% url 'entidades:lugar_delete' lugar.pk %}" class="btn btn-outline-danger" title="Eliminar">🗑️</a>
+                                        </div>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">
+                                        No hay lugares registrados
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginación -->
+                    {% if is_paginated %}
+                    <nav class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a></li>
+                            {% endif %}
+                            <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+                            {% if page_obj.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a></li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

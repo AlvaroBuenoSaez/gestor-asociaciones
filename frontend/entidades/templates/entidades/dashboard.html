@@ -1,0 +1,162 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}Entidades y Contactos - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>📇 Gestión de Entidades</h2>
+                    <p class="text-muted">Administra contactos, organizaciones y lugares de {{ user.profile.asociacion.nombre }}</p>
+                </div>
+            </div>
+
+            <!-- Tarjetas de resumen -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Entidades</h6>
+                                    <h2 class="mb-0">{{ total_entidades }}</h2>
+                                </div>
+                                <i class="bi bi-building fs-1 opacity-50"></i>
+                            </div>
+                            <a href="{% url 'entidades:entidad_list' %}" class="text-white stretched-link mt-3 d-block text-decoration-none">
+                                Ver listado <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Personas</h6>
+                                    <h2 class="mb-0">{{ total_personas }}</h2>
+                                </div>
+                                <i class="bi bi-person-badge fs-1 opacity-50"></i>
+                            </div>
+                            <a href="{% url 'entidades:persona_list' %}" class="text-white stretched-link mt-3 d-block text-decoration-none">
+                                Ver listado <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Lugares</h6>
+                                    <h2 class="mb-0">{{ total_lugares }}</h2>
+                                </div>
+                                <i class="bi bi-geo-alt fs-1 opacity-50"></i>
+                            </div>
+                            <a href="{% url 'entidades:lugar_list' %}" class="text-white stretched-link mt-3 d-block text-decoration-none">
+                                Ver listado <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="card-title">Materiales</h6>
+                                    <h2 class="mb-0">{{ total_materiales }}</h2>
+                                </div>
+                                <i class="bi bi-box-seam fs-1 opacity-50"></i>
+                            </div>
+                            <a href="{% url 'entidades:material_list' %}" class="text-dark stretched-link mt-3 d-block text-decoration-none">
+                                Ver listado <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimos registros -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">🏢 Últimas Entidades</h6>
+                            <a href="{% url 'entidades:entidad_create' %}" class="btn btn-sm btn-outline-primary">➕ Nueva</a>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for entidad in last_entidades %}
+                            <a href="{% url 'entidades:entidad_update' entidad.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ entidad.nombre }}</h6>
+                                    <small class="text-muted">{{ entidad.created_at|date:"d/m/Y" }}</small>
+                                </div>
+                                <small class="text-muted">{{ entidad.tipo|default:"Sin tipo" }}</small>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-center text-muted py-4">
+                                No hay entidades registradas
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">👤 Últimas Personas</h6>
+                            <a href="{% url 'entidades:persona_create' %}" class="btn btn-sm btn-outline-success">➕ Nueva</a>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for persona in last_personas %}
+                            <a href="{% url 'entidades:persona_update' persona.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ persona.nombre }} {{ persona.apellidos }}</h6>
+                                    <small class="text-muted">{{ persona.created_at|date:"d/m/Y" }}</small>
+                                </div>
+                                <small class="text-muted">
+                                    {% if persona.entidad %}{{ persona.entidad.nombre }}{% else %}Particular{% endif %}
+                                </small>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-center text-muted py-4">
+                                No hay personas registradas
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">📦 Últimos Materiales</h6>
+                            <a href="{% url 'entidades:material_create' %}" class="btn btn-sm btn-outline-warning">➕ Nuevo</a>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            {% for material in last_materiales %}
+                            <a href="{% url 'entidades:material_update' material.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ material.nombre }}</h6>
+                                    <small class="text-muted">{{ material.created_at|date:"d/m/Y" }}</small>
+                                </div>
+                                <small class="text-muted">{{ material.precio }} €</small>
+                            </a>
+                            {% empty %}
+                            <div class="list-group-item text-center text-muted py-4">
+                                No hay materiales registrados
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

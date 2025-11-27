@@ -149,7 +149,7 @@
                                         </div>
                                     </td>
                                     <td>
-                                        {{ proyecto.responsable }}
+                                        {{ proyecto.responsable|default:"-" }}
                                         {% if proyecto.involucrados %}
                                             <br><small class="text-muted">+ Colaboradores</small>
                                         {% endif %}

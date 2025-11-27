@@ -14,6 +14,7 @@ from core.mixins import (
     AutoAssignAssociationMixin
 )
 from .models import Proyecto
+from .forms import ProyectoForm
 
 
 class ProyectoListView(AssociationRequiredMixin, AssociationFilterMixin, ListView):
@@ -149,12 +150,15 @@ class ProyectoListView(AssociationRequiredMixin, AssociationFilterMixin, ListVie
 class ProyectoCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateView):
     """Vista para crear nuevo proyecto (solo admins)"""
     model = Proyecto
+    form_class = ProyectoForm
     template_name = 'proyectos/create.html'
-    fields = [
-        'nombre', 'responsable', 'involucrados', 'descripcion',
-        'materiales', 'lugar', 'fecha_inicio', 'fecha_final', 'recursivo'
-    ]
     success_url = reverse_lazy('proyectos:list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.user.is_authenticated and hasattr(self.request.user, 'profile'):
+             kwargs['asociacion'] = self.request.user.profile.asociacion
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -179,12 +183,15 @@ class ProyectoCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateV
 class ProyectoUpdateView(AdminRequiredMixin, AssociationFilterMixin, UpdateView):
     """Vista para editar proyecto (solo admins)"""
     model = Proyecto
+    form_class = ProyectoForm
     template_name = 'proyectos/edit.html'
-    fields = [
-        'nombre', 'responsable', 'involucrados', 'descripcion',
-        'materiales', 'lugar', 'fecha_inicio', 'fecha_final', 'recursivo'
-    ]
     success_url = reverse_lazy('proyectos:list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self.request.user.is_authenticated and hasattr(self.request.user, 'profile'):
+             kwargs['asociacion'] = self.request.user.profile.asociacion
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

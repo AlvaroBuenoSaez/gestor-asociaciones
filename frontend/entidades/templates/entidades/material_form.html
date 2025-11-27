@@ -1,0 +1,76 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}{{ title }} - Dashboard{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'entidades:material_list' %}" class="btn btn-outline-secondary me-3">
+                    ← Volver
+                </a>
+                <h2 class="mb-0">{{ title }}</h2>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label">Nombre del Material <span class="text-danger">*</span></label>
+                                {{ form.nombre }}
+                                {{ form.nombre.errors }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Precio (€)</label>
+                                {{ form.precio }}
+                                {{ form.precio.errors }}
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Uso / Descripción</label>
+                                {{ form.uso }}
+                                {{ form.uso.errors }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Ubicación (Lugar)</label>
+                                {{ form.lugar }}
+                                {{ form.lugar.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Transacción de Compra</label>
+                                {{ form.transaccion_compra }}
+                                {{ form.transaccion_compra.errors }}
+                                <div class="form-text">Opcional: Vincular con gasto en contabilidad</div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Encargado (Seleccionar uno)</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Persona Externa</label>
+                                        {{ form.encargado_persona }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small text-muted">Socia</label>
+                                        {{ form.encargado_socia }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'entidades:material_list' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar Material</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

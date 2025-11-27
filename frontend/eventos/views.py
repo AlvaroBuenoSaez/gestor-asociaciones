@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 from users.utils import association_required, is_association_admin
 from .forms import EventoForm
 from .models import Evento
@@ -264,12 +265,14 @@ def delete_evento(request, pk):
         except requests.RequestException as e:
             messages.error(request, f"Error al eliminar: {str(e)}")
 
-    evento_obj = type('obj', (object,), evento_data)
+    # Preparar datos para el template
+    # Inyectamos la asociación actual para que el template pueda acceder a object.asociacion.nombre
+    evento_data['asociacion'] = request.user.profile.asociacion
 
     context = {
         'section': 'actividades',
         'title': f"Eliminar: {evento_data['nombre']}",
-        'object': evento_obj
+        'object': evento_data
     }
     return render(request, 'actividades/delete.html', context)
 
@@ -281,3 +284,20 @@ def mapas(request):
         'asociacion': request.user.profile.asociacion,
     }
     return render(request, 'mapas/viewer.html', context)
+
+@login_required
+@association_required
+def search_lugares(request):
+    """Proxy para buscar lugares en el backend"""
+    query = request.GET.get('q', '')
+    if not query:
+        return JsonResponse([], safe=False)
+
+    client = get_client(request)
+    asociacion_id = request.user.profile.asociacion.id
+    try:
+        # Llamada al backend
+        lugares = client.get("/lugares/buscar", params={'q': query, 'asociacion_id': asociacion_id})
+        return JsonResponse(lugares or [], safe=False)
+    except requests.RequestException:
+        return JsonResponse([], safe=False)

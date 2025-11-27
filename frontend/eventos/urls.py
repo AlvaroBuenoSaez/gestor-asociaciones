@@ -17,4 +17,7 @@ urlpatterns = [
 
     # Mapas (funcionalidad separada)
     path('mapas/', views.mapas, name='mapas'),
+
+    # API Proxy
+    path('api/lugares/buscar/', views.search_lugares, name='search_lugares'),
 ]

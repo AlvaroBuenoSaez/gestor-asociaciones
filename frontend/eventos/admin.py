@@ -2,7 +2,14 @@ from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.utils.html import format_html
 from users.utils import is_association_admin, has_association
-from .models import Evento
+from .models import Evento, Lugar
+
+
+@admin.register(Lugar)
+class LugarAdmin(admin.ModelAdmin):
+    list_display = ('nombre', 'direccion', 'ciudad', 'cp', 'asociacion')
+    search_fields = ('nombre', 'direccion', 'ciudad')
+    list_filter = ('ciudad', 'asociacion')
 
 
 @admin.register(Evento)

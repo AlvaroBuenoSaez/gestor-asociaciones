@@ -100,7 +100,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>ID del Evento:</strong> #{{ object.pk }}</p>
+                            <p><strong>ID del Evento:</strong> #{{ object.id }}</p>
                             <p><strong>Asociación:</strong> {{ object.asociacion.nombre }}</p>
                         </div>
                         <div class="col-md-6">
@@ -127,12 +127,12 @@
                     <a href="{% url 'eventos:list' %}" class="btn btn-outline-secondary me-2">
                         Cancelar
                     </a>
-                    <a href="{% url 'eventos:edit' object.pk %}" class="btn btn-outline-warning">
+                    <a href="{% url 'eventos:edit' object.id %}" class="btn btn-outline-warning">
                         ✏️ Editar en su lugar
                     </a>
                 </div>
 
-                <form method="post" style="display: inline;" onsubmit="return confirmDelete()">
+                <form method="post" action="{% url 'eventos:delete' object.id %}" style="display: inline;" onsubmit="return confirmDelete()">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger btn-delete">
                         🗑️ Confirmar Eliminación

@@ -20,9 +20,6 @@
                     <button type="button" class="btn btn-outline-secondary" onclick="copyEmails()">
                         📧 Copiar Emails
                     </button>
-                    <button type="button" class="btn btn-outline-secondary">
-                        📤 Exportar
-                    </button>
                 </div>
                 {% endif %}
             </div>
@@ -153,8 +150,7 @@
                                     <th>Nombre Completo</th>
                                     <th>Teléfono</th>
                                     <th>Dirección</th>
-                                    <th>Estado</th>
-                                    <th>Fecha Inscripción</th>
+                                    <th>Cuota</th>
                                     {% if is_admin %}
                                     <th>Acciones</th>
                                     {% endif %}
@@ -202,7 +198,6 @@
                                             <span class="badge bg-warning">⚠️ Pendiente</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ socia.fecha_inscripcion|date:"d/m/Y" }}</td>
                                     {% if is_admin %}
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
@@ -353,11 +348,11 @@ function copyEmails() {
     // Obtener todos los emails de la página actual (o idealmente de todas las socias filtradas)
     // Como estamos en el cliente, solo podemos acceder a los visibles o hacer una petición AJAX.
     // Para simplificar y ser robusto, haremos una petición rápida al backend para obtener solo los emails.
-    
+
     const currentUrl = new URL(window.location.href);
     const params = new URLSearchParams(currentUrl.search);
     params.append('export_emails', 'true');
-    
+
     fetch(`${currentUrl.pathname}?${params.toString()}`, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'

@@ -1,0 +1,137 @@
+{% extends 'base/base_dashboard.html' %}
+
+{% block title %}{{ title }} - Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+<style>
+    /* Ajustes para Tom Select en Bootstrap 5 */
+    .ts-control {
+        border-radius: 1rem;
+        padding: 0.75rem 1rem;
+        border: 2px solid #f1f5f9;
+    }
+    .ts-control.focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(167, 139, 250, 0.1);
+    }
+    .ts-dropdown {
+        border-radius: 1rem;
+        border: 1px solid #f1f5f9;
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+</style>
+{% endblock %}
+
+{% block dashboard_content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex align-items-center mb-4">
+                <a href="{% url 'entidades:persona_list' %}" class="btn btn-outline-secondary me-3">
+                    ← Volver
+                </a>
+                <h2 class="mb-0">{{ title }}</h2>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                                {{ form.nombre }}
+                                {{ form.nombre.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Apellidos</label>
+                                {{ form.apellidos }}
+                                {{ form.apellidos.errors }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Contacto / Entidad</label>
+                                {{ form.contacto }}
+                                {{ form.contacto.errors }}
+                                <div class="form-text">Nombre de la organización o rol</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Cargo</label>
+                                {{ form.cargo }}
+                                {{ form.cargo.errors }}
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label">Teléfono</label>
+                                {{ form.telefono }}
+                                {{ form.telefono.errors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                {{ form.email }}
+                                {{ form.email.errors }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label">Proyecto Asociado</label>
+                                {{ form.proyecto }}
+                                {{ form.proyecto.errors }}
+                            </div>
+
+                            <div class="col-md-12">
+                                <label class="form-label">Le conoce (Socias)</label>
+                                {{ form.le_conoce }}
+                                {{ form.le_conoce.errors }}
+                                <div class="form-text">Busca y selecciona una o varias socias.</div>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label">Observaciones</label>
+                                {{ form.observaciones }}
+                                {{ form.observaciones.errors }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4 pt-3 border-top">
+                            <a href="{% url 'entidades:persona_list' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                            <button type="submit" class="btn btn-primary">Guardar Persona</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Tom Select para el campo 'le_conoce'
+        new TomSelect("#{{ form.le_conoce.id_for_label }}", {
+            plugins: ['remove_button', 'checkbox_options'],
+            create: false,
+            placeholder: 'Buscar socias...',
+            maxOptions: null,
+            render: {
+                option: function(data, escape) {
+                    return '<div>' + escape(data.text) + '</div>';
+                },
+                item: function(data, escape) {
+                    return '<div>' + escape(data.text) + '</div>';
+                }
+            }
+        });
+
+        // Opcional: También para Proyecto si se desea búsqueda
+        new TomSelect("#{{ form.proyecto.id_for_label }}", {
+            create: false,
+            placeholder: 'Seleccionar proyecto...',
+            allowEmptyOption: true
+        });
+    });
+</script>
+{% endblock %}

@@ -11,6 +11,10 @@ router = APIRouter(
 )
 
 @router.get("/buscar", response_model=List[Lugar])
-def buscar_lugares(q: str = Query(..., min_length=1), db: Session = Depends(get_db)):
+def buscar_lugares(
+    q: str = Query(..., min_length=1),
+    asociacion_id: int = Query(...),
+    db: Session = Depends(get_db)
+):
     repo = SqlAlchemyLugarRepository(db)
-    return repo.search_by_name(q)
+    return repo.search_by_name(q, asociacion_id)

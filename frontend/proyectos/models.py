@@ -17,14 +17,33 @@ class Proyecto(models.Model):
         max_length=200,
         help_text="Nombre del proyecto"
     )
-    responsable = models.CharField(
-        max_length=100,
-        help_text="Persona responsable del proyecto"
+    responsable = models.ForeignKey(
+        'socias.Socia',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='proyectos_responsable',
+        help_text="Socia responsable del proyecto"
     )
     involucrados = models.TextField(
         blank=True,
-        help_text="Lista de personas involucradas en el proyecto"
+        help_text="Lista de personas involucradas en el proyecto (Texto libre)"
     )
+    
+    # Relaciones con personas y socias
+    socias_involucradas = models.ManyToManyField(
+        'socias.Socia',
+        blank=True,
+        related_name='proyectos_involucrada',
+        help_text="Socias que participan en el proyecto"
+    )
+    personas_involucradas = models.ManyToManyField(
+        'entidades.Persona',
+        blank=True,
+        related_name='proyectos_involucrada',
+        help_text="Personas externas que participan en el proyecto"
+    )
+
     descripcion = models.TextField(
         blank=True,
         help_text="Descripción detallada del proyecto"
@@ -33,12 +52,28 @@ class Proyecto(models.Model):
     # Recursos y ubicación
     materiales = models.TextField(
         blank=True,
-        help_text="Lista de materiales necesarios"
+        help_text="Lista de materiales necesarios (Texto libre)"
     )
+    materiales_necesarios = models.ManyToManyField(
+        'entidades.Material',
+        blank=True,
+        related_name='proyectos',
+        help_text="Materiales del inventario necesarios"
+    )
+
     lugar = models.CharField(
         max_length=300,
         blank=True,
-        help_text="Ubicación donde se desarrolla el proyecto"
+        help_text="Ubicación donde se desarrolla el proyecto (Texto libre)"
+    )
+    lugar_fk = models.ForeignKey(
+        'eventos.Lugar',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='proyectos',
+        verbose_name="Lugar (Selección)",
+        help_text="Lugar registrado en el sistema"
     )
 
     # Fechas del proyecto

@@ -141,12 +141,17 @@
                                         {% endif %}
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <label for="{{ form.hora_inicio.id_for_label }}" class="form-label">
-                                            {{ form.hora_inicio.label }} <span class="required">*</span>
-                                        </label>
-                                        {{ form.hora_inicio }}
-                                        {% if form.hora_inicio.errors %}
-                                            <div class="text-danger small mt-1">{{ form.hora_inicio.errors.0 }}</div>
+                                        <label class="form-label">Hora de inicio <span class="required">*</span></label>
+                                        <div class="input-group">
+                                            {{ form.hora }}
+                                            <span class="input-group-text">:</span>
+                                            {{ form.minutos }}
+                                        </div>
+                                        {% if form.hora.errors %}
+                                            <div class="text-danger small mt-1">{{ form.hora.errors.0 }}</div>
+                                        {% endif %}
+                                        {% if form.minutos.errors %}
+                                            <div class="text-danger small mt-1">{{ form.minutos.errors.0 }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -452,19 +457,12 @@ document.addEventListener('DOMContentLoaded', function() {
         fechaInput.classList.add('form-control');
     }
 
-    const horaInput = document.getElementById('{{ form.hora_inicio.id_for_label }}');
-    if (horaInput) {
-        horaInput.setAttribute('type', 'time');
-        horaInput.setAttribute('step', '300'); // 5 minutos
-        horaInput.classList.add('form-control');
-    }
-
     // Añadir clases CSS a todos los campos del formulario
-    const formControls = ['nombre', 'descripcion', 'lugar_nombre', 'lugar_direccion', 'observaciones', 'duracion_cantidad', 'duracion_unidad'];
+    const formControls = ['nombre', 'descripcion', 'lugar_nombre', 'lugar_direccion', 'observaciones', 'duracion_cantidad', 'duracion_unidad', 'hora', 'minutos'];
     formControls.forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
-            if (fieldName !== 'duracion_unidad') {
+            if (fieldName !== 'duracion_unidad' && fieldName !== 'hora' && fieldName !== 'minutos') {
                 field.classList.add('form-control');
             }
             if (fieldName === 'descripcion' || fieldName === 'observaciones') {
@@ -488,7 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const query = this.value;
             if (query.length < 2) return;
 
-            fetch(`/api/v1/lugares/buscar?q=${encodeURIComponent(query)}`)
+            fetch(`{% url 'eventos:search_lugares' %}?q=${encodeURIComponent(query)}`)
                 .then(response => response.json())
                 .then(data => {
                     datalist.innerHTML = '';
@@ -519,7 +517,9 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePreview() {
         const nombre = document.getElementById('id_nombre').value || 'Nombre del evento';
         const fechaDia = document.getElementById('id_fecha_dia').value;
-        const horaInicio = document.getElementById('id_hora_inicio').value;
+        const hora = document.getElementById('id_hora').value;
+        const minutos = document.getElementById('id_minutos').value;
+
         const lugarNombre = document.getElementById('id_lugar_nombre').value;
         const lugarDireccion = document.getElementById('id_lugar_direccion').value;
 
@@ -534,7 +534,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('preview-nombre').textContent = nombre;
 
-        if (fechaDia && horaInicio) {
+        if (fechaDia && hora && minutos) {
+            const horaInicio = `${hora}:${minutos}`;
             const fechaObj = new Date(fechaDia + 'T' + horaInicio);
             const fechaFormat = fechaObj.toLocaleDateString('es-ES', {
                 year: 'numeric',
@@ -558,10 +559,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Escuchar cambios en los campos para actualizar vista previa
-    ['nombre', 'fecha_dia', 'hora_inicio', 'lugar_nombre', 'lugar_direccion'].forEach(function(fieldName) {
+    ['nombre', 'fecha_dia', 'hora', 'minutos', 'lugar_nombre', 'lugar_direccion'].forEach(function(fieldName) {
         const field = document.getElementById('id_' + fieldName);
         if (field) {
             field.addEventListener('input', updatePreview);
+            field.addEventListener('change', updatePreview);
         }
     });
 
