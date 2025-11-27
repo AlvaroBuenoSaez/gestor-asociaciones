@@ -10,6 +10,9 @@ urlpatterns = [
     # Dashboard de contabilidad
     path('', views.TransaccionListView.as_view(), name='list'),
     path('dashboard/', views.TransaccionListView.as_view(), name='dashboard'),
+    
+    # Descarga de informes
+    path('reporte/descargar/', views.DownloadReportView.as_view(), name='download_report'),
 
     # CRUD para admins
     path('crear/', views.TransaccionCreateView.as_view(), name='create'),

@@ -21,9 +21,9 @@ app.add_middleware(
 async def health_check():
     return {"status": "healthy", "architecture": "hexagonal"}
 
-app.include_router(users.router, prefix="/api/v1")
-app.include_router(socias.router, prefix="/api/v1")
-app.include_router(eventos.router, prefix="/api/v1")
-app.include_router(drive.router, prefix="/api/v1")
-app.include_router(lugares.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/v1")
+app.include_router(socias.router, prefix="/v1")
+app.include_router(eventos.router, prefix="/v1")
+app.include_router(drive.router, prefix="/v1")
+app.include_router(lugares.router, prefix="/v1")
 

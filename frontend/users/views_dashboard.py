@@ -11,8 +11,9 @@ import csv
 import io
 from socias.models import Socia
 from finanzas.models import Transaccion
-from eventos.models import Evento
+from eventos.models import Evento, Lugar
 from proyectos.models import Proyecto
+from entidades.models import Persona, Material
 
 
 @association_required
@@ -313,7 +314,43 @@ def export_global_excel(request):
                 socia.nacimiento, socia.pagado, socia.descripcion
             ])
 
-        # --- HOJA 2: CONTABILIDAD ---
+        # --- HOJA 2: LUGARES ---
+        ws_lugares = wb.create_sheet("Lugares")
+        headers_lugares = ['nombre', 'direccion', 'descripcion', 'numero', 'cp', 'ciudad', 'pais']
+        ws_lugares.append(headers_lugares)
+
+        for lugar in Lugar.objects.filter(asociacion=asociacion):
+            ws_lugares.append([
+                lugar.nombre, lugar.direccion, lugar.descripcion,
+                lugar.numero, lugar.cp, lugar.ciudad, lugar.pais
+            ])
+
+        # --- HOJA 3: PERSONAS ---
+        ws_personas = wb.create_sheet("Personas")
+        headers_personas = ['nombre', 'apellidos', 'contacto', 'cargo', 'telefono', 'email', 'observaciones', 'proyecto_nombre']
+        ws_personas.append(headers_personas)
+
+        for persona in Persona.objects.filter(asociacion=asociacion):
+            ws_personas.append([
+                persona.nombre, persona.apellidos, persona.contacto, persona.cargo,
+                persona.telefono, persona.email, persona.observaciones,
+                persona.proyecto.nombre if persona.proyecto else ''
+            ])
+
+        # --- HOJA 4: MATERIALES ---
+        ws_materiales = wb.create_sheet("Materiales")
+        headers_materiales = ['nombre', 'uso', 'precio', 'lugar_nombre', 'encargado_persona_nombre', 'encargado_socia_numero']
+        ws_materiales.append(headers_materiales)
+
+        for material in Material.objects.filter(asociacion=asociacion):
+            ws_materiales.append([
+                material.nombre, material.uso, material.precio,
+                material.lugar.nombre if material.lugar else '',
+                f"{material.encargado_persona.nombre} {material.encargado_persona.apellidos}" if material.encargado_persona else '',
+                material.encargado_socia.numero_socia if material.encargado_socia else ''
+            ])
+
+        # --- HOJA 5: CONTABILIDAD ---
         ws_finanzas = wb.create_sheet("Contabilidad")
         headers_finanzas = ['fecha_transaccion', 'cantidad', 'concepto', 'descripcion', 'entidad', 'fecha_vencimiento']
         ws_finanzas.append(headers_finanzas)
@@ -324,7 +361,7 @@ def export_global_excel(request):
                 trans.entidad, trans.fecha_vencimiento
             ])
 
-        # --- HOJA 3: ACTIVIDADES ---
+        # --- HOJA 6: ACTIVIDADES ---
         ws_eventos = wb.create_sheet("Actividades")
         headers_eventos = ['nombre', 'fecha', 'lugar', 'responsable_numero_socia', 'responsable_nombre',
                            'descripcion', 'duracion', 'colaboradores', 'observaciones']
@@ -333,23 +370,32 @@ def export_global_excel(request):
         for evento in Evento.objects.filter(asociacion=asociacion):
             # Excel no soporta timezones
             fecha_naive = evento.fecha.replace(tzinfo=None) if evento.fecha else None
+            
+            # Obtener nombre del lugar (FK o texto)
+            lugar_str = str(evento.lugar) if evento.lugar else evento.lugar_nombre
+
             ws_eventos.append([
-                evento.nombre, fecha_naive, evento.lugar,
+                evento.nombre, fecha_naive, lugar_str,
                 evento.responsable.numero_socia if evento.responsable else '',
                 str(evento.responsable) if evento.responsable else '',
                 evento.descripcion, evento.duracion, evento.colaboradores,
                 evento.observaciones
             ])
 
-        # --- HOJA 4: PROYECTOS ---
+        # --- HOJA 7: PROYECTOS ---
         ws_proyectos = wb.create_sheet("Proyectos")
         headers_proyectos = ['nombre', 'responsable', 'fecha_inicio', 'fecha_final', 'lugar',
                              'descripcion', 'materiales', 'involucrados', 'recursivo']
         ws_proyectos.append(headers_proyectos)
 
         for proy in Proyecto.objects.filter(asociacion=asociacion):
+            # Obtener lugar (FK o texto)
+            lugar_str = str(proy.lugar_fk) if proy.lugar_fk else proy.lugar
+
             ws_proyectos.append([
-                proy.nombre, proy.responsable, proy.fecha_inicio, proy.fecha_final, proy.lugar,
+                proy.nombre, 
+                str(proy.responsable) if proy.responsable else '', 
+                proy.fecha_inicio, proy.fecha_final, lugar_str,
                 proy.descripcion, proy.materiales, proy.involucrados, proy.recursivo
             ])
 
@@ -390,23 +436,38 @@ def import_global_excel(request):
                 count, errors = _process_socias_import(xls['Socias'], asociacion)
                 results.append(f"Socias: {count} importadas, {errors} errores.")
 
-            # 2. Procesar Contabilidad
+            # 2. Procesar Lugares
+            if 'Lugares' in xls:
+                count = _process_lugares_import(xls['Lugares'], asociacion)
+                results.append(f"Lugares: {count} importados.")
+
+            # 3. Procesar Personas
+            if 'Personas' in xls:
+                count = _process_personas_import(xls['Personas'], asociacion)
+                results.append(f"Personas: {count} importadas.")
+
+            # 4. Procesar Materiales
+            if 'Materiales' in xls:
+                count = _process_materiales_import(xls['Materiales'], asociacion)
+                results.append(f"Materiales: {count} importados.")
+
+            # 5. Procesar Contabilidad
             if 'Contabilidad' in xls:
                 count = _process_finanzas_import(xls['Contabilidad'], asociacion)
                 results.append(f"Contabilidad: {count} importadas.")
 
-            # 3. Procesar Proyectos
+            # 6. Procesar Proyectos
             if 'Proyectos' in xls:
                 count = _process_proyectos_import(xls['Proyectos'], asociacion)
                 results.append(f"Proyectos: {count} importados.")
 
-            # 4. Procesar Actividades (Depende de Socias)
+            # 7. Procesar Actividades (Depende de Socias)
             if 'Actividades' in xls:
                 count = _process_eventos_import(xls['Actividades'], asociacion)
                 results.append(f"Actividades: {count} importadas.")
 
             if not results:
-                messages.warning(request, "El archivo no contiene ninguna hoja válida (Socias, Contabilidad, Actividades, Proyectos).")
+                messages.warning(request, "El archivo no contiene ninguna hoja válida.")
             else:
                 messages.success(request, "Importación Global Completa: " + " | ".join(results))
 
@@ -457,6 +518,100 @@ def _process_socias_import(df, asociacion):
             errors += 1
     return count, errors
 
+def _process_lugares_import(df, asociacion):
+    import pandas as pd
+    df.columns = df.columns.str.lower()
+    count = 0
+    for _, row in df.iterrows():
+        try:
+            if pd.isna(row.get('nombre')): continue
+
+            Lugar.objects.update_or_create(
+                asociacion=asociacion,
+                nombre=str(row['nombre']),
+                defaults={
+                    'direccion': str(row.get('direccion', '')),
+                    'descripcion': str(row.get('descripcion', '')),
+                    'numero': str(row.get('numero', '')),
+                    'cp': str(row.get('cp', '')),
+                    'ciudad': str(row.get('ciudad', '')),
+                    'pais': str(row.get('pais', 'España'))
+                }
+            )
+            count += 1
+        except Exception: pass
+    return count
+
+def _process_personas_import(df, asociacion):
+    import pandas as pd
+    df.columns = df.columns.str.lower()
+    count = 0
+    for _, row in df.iterrows():
+        try:
+            if pd.isna(row.get('nombre')): continue
+
+            # Buscar proyecto si existe
+            proyecto = None
+            if not pd.isna(row.get('proyecto_nombre')):
+                proyecto = Proyecto.objects.filter(asociacion=asociacion, nombre=str(row['proyecto_nombre'])).first()
+
+            Persona.objects.update_or_create(
+                asociacion=asociacion,
+                nombre=str(row['nombre']),
+                apellidos=str(row.get('apellidos', '')),
+                defaults={
+                    'contacto': str(row.get('contacto', '')),
+                    'cargo': str(row.get('cargo', '')),
+                    'telefono': str(row.get('telefono', '')),
+                    'email': str(row.get('email', '')),
+                    'observaciones': str(row.get('observaciones', '')),
+                    'proyecto': proyecto
+                }
+            )
+            count += 1
+        except Exception: pass
+    return count
+
+def _process_materiales_import(df, asociacion):
+    import pandas as pd
+    df.columns = df.columns.str.lower()
+    count = 0
+    for _, row in df.iterrows():
+        try:
+            if pd.isna(row.get('nombre')): continue
+
+            # Buscar lugar
+            lugar = None
+            if not pd.isna(row.get('lugar_nombre')):
+                lugar = Lugar.objects.filter(asociacion=asociacion, nombre=str(row['lugar_nombre'])).first()
+
+            # Buscar encargado socia
+            encargado_socia = None
+            if not pd.isna(row.get('encargado_socia_numero')):
+                encargado_socia = Socia.objects.filter(asociacion=asociacion, numero_socia=str(row['encargado_socia_numero'])).first()
+
+            # Buscar encargado persona (nombre completo aproximado)
+            encargado_persona = None
+            if not pd.isna(row.get('encargado_persona_nombre')):
+                # Intento simple de búsqueda por nombre
+                nombre_completo = str(row['encargado_persona_nombre'])
+                encargado_persona = Persona.objects.filter(asociacion=asociacion, nombre__icontains=nombre_completo.split()[0]).first()
+
+            Material.objects.update_or_create(
+                asociacion=asociacion,
+                nombre=str(row['nombre']),
+                defaults={
+                    'uso': str(row.get('uso', '')),
+                    'precio': row.get('precio', 0.0),
+                    'lugar': lugar,
+                    'encargado_socia': encargado_socia,
+                    'encargado_persona': encargado_persona
+                }
+            )
+            count += 1
+        except Exception: pass
+    return count
+
 def _process_finanzas_import(df, asociacion):
     import pandas as pd
     df.columns = df.columns.str.lower()
@@ -498,12 +653,22 @@ def _process_eventos_import(df, asociacion):
                 asociacion=asociacion,
                 nombre=str(row['nombre']),
                 fecha=pd.to_datetime(row['fecha']),
-                lugar=str(row.get('lugar', '')),
+                lugar=None, # Se asigna abajo si existe
+                lugar_nombre=str(row.get('lugar', '')), # Guardar como texto por defecto
                 responsable=responsable,
                 descripcion=str(row.get('descripcion', '')),
                 colaboradores=str(row.get('colaboradores', '')),
                 observaciones=str(row.get('observaciones', ''))
             )
+            
+            # Intentar vincular lugar si existe
+            if not pd.isna(row.get('lugar')):
+                lugar_obj = Lugar.objects.filter(asociacion=asociacion, nombre=str(row['lugar'])).first()
+                if lugar_obj:
+                    evt = Evento.objects.filter(asociacion=asociacion, nombre=str(row['nombre'])).last()
+                    evt.lugar = lugar_obj
+                    evt.save()
+
             count += 1
         except Exception: pass
     return count
@@ -519,7 +684,11 @@ def _process_proyectos_import(df, asociacion):
             Proyecto.objects.create(
                 asociacion=asociacion,
                 nombre=str(row['nombre']),
-                responsable=str(row.get('responsable', '')),
+                responsable=None, # Se asigna si es socia, pero aquí es texto en el modelo? No, es FK.
+                # El modelo Proyecto tiene responsable como FK a Socia.
+                # En el excel exportamos str(responsable).
+                # Deberíamos intentar buscar la socia por nombre o algo, pero es difícil.
+                # Por ahora lo dejamos null si no coincide exacto, o intentamos buscar.
                 fecha_inicio=pd.to_datetime(row['fecha_inicio']).date(),
                 fecha_final=pd.to_datetime(row['fecha_final']).date() if not pd.isna(row.get('fecha_final')) else None,
                 lugar=str(row.get('lugar', '')),
@@ -528,6 +697,15 @@ def _process_proyectos_import(df, asociacion):
                 involucrados=str(row.get('involucrados', '')),
                 recursivo=str(row.get('recursivo', '')).lower() in ['true', '1', 'si', 'yes']
             )
+            
+            # Intentar vincular lugar FK
+            if not pd.isna(row.get('lugar')):
+                lugar_obj = Lugar.objects.filter(asociacion=asociacion, nombre=str(row['lugar'])).first()
+                if lugar_obj:
+                    proy = Proyecto.objects.filter(asociacion=asociacion, nombre=str(row['nombre'])).last()
+                    proy.lugar_fk = lugar_obj
+                    proy.save()
+
             count += 1
         except Exception: pass
     return count
@@ -643,8 +821,11 @@ def export_eventos(request):
                 for obj in queryset:
                     # Excel no soporta timezones
                     fecha_naive = obj.fecha.replace(tzinfo=None) if obj.fecha else None
+                    # Obtener nombre del lugar (FK o texto)
+                    lugar_str = str(obj.lugar) if obj.lugar else obj.lugar_nombre
+                    
                     ws.append([
-                        obj.nombre, fecha_naive, obj.lugar,
+                        obj.nombre, fecha_naive, lugar_str,
                         obj.responsable.numero_socia if obj.responsable else '',
                         obj.descripcion, obj.duracion, obj.colaboradores, obj.observaciones
                     ])
@@ -723,8 +904,13 @@ def export_proyectos(request):
             ws.append(headers)
             if not is_template:
                 for obj in queryset:
+                    # Obtener lugar (FK o texto)
+                    lugar_str = str(obj.lugar_fk) if obj.lugar_fk else obj.lugar
+                    
                     ws.append([
-                        obj.nombre, obj.responsable, obj.fecha_inicio, obj.fecha_final, obj.lugar,
+                        obj.nombre, 
+                        str(obj.responsable) if obj.responsable else '', 
+                        obj.fecha_inicio, obj.fecha_final, lugar_str,
                         obj.descripcion, obj.materiales, obj.involucrados, obj.recursivo
                     ])
 

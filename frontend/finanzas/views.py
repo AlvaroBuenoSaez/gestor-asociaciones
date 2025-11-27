@@ -3,9 +3,16 @@ Vistas para gestión de finanzas/transacciones con CRUD completo
 """
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Sum
+from django.db.models.functions import TruncMonth
+from django.http import HttpResponse
+from django.utils import timezone
+import json
+import openpyxl
+from datetime import datetime, timedelta
+
 from users.utils import is_association_admin
 from core.api import get_client
 from core.mixins import (
@@ -106,7 +113,157 @@ class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, List
             set(t.entidad for t in todas_transacciones if t.entidad and t.entidad.strip())
         )
 
+        # --- DATOS PARA GRÁFICAS ---
+        # Solo consideramos gastos (cantidad < 0) para las gráficas de "gastos de distintos tipos"
+        gastos_qs = todas_transacciones.filter(cantidad__lt=0)
+
+        # 1. Gastos por Mes (Últimos 12 meses)
+        gastos_por_mes = (
+            gastos_qs
+            .annotate(month=TruncMonth('fecha_transaccion'))
+            .values('month')
+            .annotate(total=Sum('cantidad'))
+            .order_by('month')
+        )
+        
+        chart_monthly = {
+            'labels': [g['month'].strftime('%B %Y') for g in gastos_por_mes if g['month']],
+            'data': [abs(float(g['total'])) for g in gastos_por_mes if g['month']]
+        }
+
+        # 2. Gastos por Proyecto
+        gastos_por_proyecto = (
+            gastos_qs
+            .exclude(proyecto__isnull=True)
+            .values('proyecto__nombre')
+            .annotate(total=Sum('cantidad'))
+            .order_by('total')[:10] # Top 10
+        )
+        
+        chart_project = {
+            'labels': [g['proyecto__nombre'] for g in gastos_por_proyecto],
+            'data': [abs(float(g['total'])) for g in gastos_por_proyecto]
+        }
+
+        # 3. Gastos por Entidad
+        gastos_por_entidad = (
+            gastos_qs
+            .exclude(entidad='')
+            .values('entidad')
+            .annotate(total=Sum('cantidad'))
+            .order_by('total')[:10] # Top 10
+        )
+
+        chart_entity = {
+            'labels': [g['entidad'] for g in gastos_por_entidad],
+            'data': [abs(float(g['total'])) for g in gastos_por_entidad]
+        }
+
+        context['chart_data'] = json.dumps({
+            'monthly': chart_monthly,
+            'project': chart_project,
+            'entity': chart_entity
+        })
+
         return context
+
+
+class DownloadReportView(AssociationRequiredMixin, View):
+    """Vista para descargar informes financieros (Excel)"""
+    
+    def get(self, request, *args, **kwargs):
+        report_type = request.GET.get('type', 'annual')
+        asociacion = request.user.profile.asociacion
+        
+        # Definir rango de fechas
+        today = timezone.now().date()
+        start_date = None
+        end_date = today
+        filename_prefix = "informe"
+
+        if report_type == 'weekly':
+            start_date = today - timedelta(days=7)
+            filename_prefix = "informe_semanal"
+        elif report_type == 'quarterly':
+            # Trimestre actual
+            quarter = (today.month - 1) // 3 + 1
+            start_month = (quarter - 1) * 3 + 1
+            start_date = today.replace(month=start_month, day=1)
+            filename_prefix = "informe_trimestral"
+        elif report_type == 'annual':
+            start_date = today.replace(month=1, day=1)
+            filename_prefix = "informe_anual"
+        else:
+            # Default to annual
+            start_date = today.replace(month=1, day=1)
+
+        # Filtrar transacciones
+        transacciones = Transaccion.objects.filter(
+            asociacion=asociacion,
+            fecha_transaccion__gte=start_date,
+            fecha_transaccion__lte=end_date
+        ).order_by('fecha_transaccion')
+
+        # Crear Excel
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Informe Financiero"
+
+        # Encabezados
+        headers = ['Fecha', 'Concepto', 'Tipo', 'Cantidad', 'Entidad', 'Proyecto', 'Evento', 'Descripción']
+        ws.append(headers)
+
+        # Datos
+        total_ingresos = 0
+        total_gastos = 0
+
+        for t in transacciones:
+            tipo = "Ingreso" if t.cantidad >= 0 else "Gasto"
+            if t.cantidad >= 0:
+                total_ingresos += t.cantidad
+            else:
+                total_gastos += abs(t.cantidad)
+                
+            row = [
+                t.fecha_transaccion,
+                t.concepto,
+                tipo,
+                t.cantidad,
+                t.entidad,
+                t.proyecto.nombre if t.proyecto else "",
+                t.evento.nombre if t.evento else "",
+                t.descripcion
+            ]
+            ws.append(row)
+
+        # Resumen al final
+        ws.append([])
+        ws.append(['Resumen del Periodo', f'{start_date} a {end_date}'])
+        ws.append(['Total Ingresos', total_ingresos])
+        ws.append(['Total Gastos', total_gastos])
+        ws.append(['Balance', total_ingresos - total_gastos])
+
+        # Ajustar ancho de columnas
+        for col in ws.columns:
+            max_length = 0
+            column = col[0].column_letter
+            for cell in col:
+                try:
+                    if len(str(cell.value)) > max_length:
+                        max_length = len(str(cell.value))
+                except:
+                    pass
+            adjusted_width = (max_length + 2)
+            ws.column_dimensions[column].width = adjusted_width
+
+        # Respuesta HTTP
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{today.strftime("%Y%m%d")}.xlsx"'
+        
+        wb.save(response)
+        return response
 
 
 class TransaccionCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateView):
