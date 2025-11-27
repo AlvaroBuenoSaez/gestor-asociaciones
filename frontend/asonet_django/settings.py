@@ -35,7 +35,7 @@ SECRET_KEY = 'django-insecure-=r)7a+lamvyun3ec&g67sx8u6n1^p*pa-q^0zykwawj9u@&=$e
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']  # Permitir todos los hosts para facilitar despliegue en PythonAnywhere
 
 # API Keys
 GEOAPIFY_API_KEY = os.getenv('GEOAPIFY_API_KEY')
@@ -141,6 +141,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Directorio donde collectstatic recopilará los archivos para producción
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Directorios adicionales donde buscar archivos estáticos (desarrollo)
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
