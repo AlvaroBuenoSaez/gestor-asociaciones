@@ -370,7 +370,7 @@ def export_global_excel(request):
         for evento in Evento.objects.filter(asociacion=asociacion):
             # Excel no soporta timezones
             fecha_naive = evento.fecha.replace(tzinfo=None) if evento.fecha else None
-            
+
             # Obtener nombre del lugar (FK o texto)
             lugar_str = str(evento.lugar) if evento.lugar else evento.lugar_nombre
 
@@ -393,8 +393,8 @@ def export_global_excel(request):
             lugar_str = str(proy.lugar_fk) if proy.lugar_fk else proy.lugar
 
             ws_proyectos.append([
-                proy.nombre, 
-                str(proy.responsable) if proy.responsable else '', 
+                proy.nombre,
+                str(proy.responsable) if proy.responsable else '',
                 proy.fecha_inicio, proy.fecha_final, lugar_str,
                 proy.descripcion, proy.materiales, proy.involucrados, proy.recursivo
             ])
@@ -660,7 +660,7 @@ def _process_eventos_import(df, asociacion):
                 colaboradores=str(row.get('colaboradores', '')),
                 observaciones=str(row.get('observaciones', ''))
             )
-            
+
             # Intentar vincular lugar si existe
             if not pd.isna(row.get('lugar')):
                 lugar_obj = Lugar.objects.filter(asociacion=asociacion, nombre=str(row['lugar'])).first()
@@ -697,7 +697,7 @@ def _process_proyectos_import(df, asociacion):
                 involucrados=str(row.get('involucrados', '')),
                 recursivo=str(row.get('recursivo', '')).lower() in ['true', '1', 'si', 'yes']
             )
-            
+
             # Intentar vincular lugar FK
             if not pd.isna(row.get('lugar')):
                 lugar_obj = Lugar.objects.filter(asociacion=asociacion, nombre=str(row['lugar'])).first()
@@ -823,7 +823,7 @@ def export_eventos(request):
                     fecha_naive = obj.fecha.replace(tzinfo=None) if obj.fecha else None
                     # Obtener nombre del lugar (FK o texto)
                     lugar_str = str(obj.lugar) if obj.lugar else obj.lugar_nombre
-                    
+
                     ws.append([
                         obj.nombre, fecha_naive, lugar_str,
                         obj.responsable.numero_socia if obj.responsable else '',
@@ -906,10 +906,10 @@ def export_proyectos(request):
                 for obj in queryset:
                     # Obtener lugar (FK o texto)
                     lugar_str = str(obj.lugar_fk) if obj.lugar_fk else obj.lugar
-                    
+
                     ws.append([
-                        obj.nombre, 
-                        str(obj.responsable) if obj.responsable else '', 
+                        obj.nombre,
+                        str(obj.responsable) if obj.responsable else '',
                         obj.fecha_inicio, obj.fecha_final, lugar_str,
                         obj.descripcion, obj.materiales, obj.involucrados, obj.recursivo
                     ])

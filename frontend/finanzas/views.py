@@ -125,7 +125,7 @@ class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, List
             .annotate(total=Sum('cantidad'))
             .order_by('month')
         )
-        
+
         chart_monthly = {
             'labels': [g['month'].strftime('%B %Y') for g in gastos_por_mes if g['month']],
             'data': [abs(float(g['total'])) for g in gastos_por_mes if g['month']]
@@ -139,7 +139,7 @@ class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, List
             .annotate(total=Sum('cantidad'))
             .order_by('total')[:10] # Top 10
         )
-        
+
         chart_project = {
             'labels': [g['proyecto__nombre'] for g in gastos_por_proyecto],
             'data': [abs(float(g['total'])) for g in gastos_por_proyecto]
@@ -170,11 +170,11 @@ class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, List
 
 class DownloadReportView(AssociationRequiredMixin, View):
     """Vista para descargar informes financieros (Excel)"""
-    
+
     def get(self, request, *args, **kwargs):
         report_type = request.GET.get('type', 'annual')
         asociacion = request.user.profile.asociacion
-        
+
         # Definir rango de fechas
         today = timezone.now().date()
         start_date = None
@@ -223,7 +223,7 @@ class DownloadReportView(AssociationRequiredMixin, View):
                 total_ingresos += t.cantidad
             else:
                 total_gastos += abs(t.cantidad)
-                
+
             row = [
                 t.fecha_transaccion,
                 t.concepto,
@@ -261,7 +261,7 @@ class DownloadReportView(AssociationRequiredMixin, View):
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
         response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{today.strftime("%Y%m%d")}.xlsx"'
-        
+
         wb.save(response)
         return response
 

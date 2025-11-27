@@ -1,17 +1,25 @@
 import os
 import sys
-from pathlib import Path
 
 # --- 1. Configuración de Rutas ---
-# Ajusta estas rutas según donde tengas tu código en PythonAnywhere
-# Por defecto asumo que 'e2e' está en la raíz del proyecto
-BASE_DIR = Path(__file__).resolve().parent.parent
-BACKEND_DIR = BASE_DIR / "backend"
-FRONTEND_DIR = BASE_DIR / "frontend"
+# IMPORTANTE: En PythonAnywhere, este archivo vive en /var/www, por lo que __file__ no sirve para localizar tu código.
+# Debemos apuntar explícitamente a la carpeta donde clonaste el repo.
+
+# Detectamos el directorio home del usuario (ej: /home/AlvaroBueno)
+HOME_DIR = os.path.expanduser("~")
+PROJECT_NAME = "gestor-asociaciones" # Asegúrate de que tu carpeta se llama así
+
+BASE_DIR = os.path.join(HOME_DIR, PROJECT_NAME)
+BACKEND_DIR = os.path.join(BASE_DIR, "backend")
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 
 # Añadir al path para que Python encuentre los módulos
-sys.path.append(str(BACKEND_DIR))
-sys.path.append(str(FRONTEND_DIR))
+if BASE_DIR not in sys.path:
+    sys.path.append(BASE_DIR)
+if BACKEND_DIR not in sys.path:
+    sys.path.append(BACKEND_DIR)
+if FRONTEND_DIR not in sys.path:
+    sys.path.append(FRONTEND_DIR)
 
 # --- 2. Configuración de Django (Frontend) ---
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "asonet_django.settings")

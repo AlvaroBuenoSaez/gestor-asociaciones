@@ -50,7 +50,7 @@ def generate_data():
         if nombre in lugares_nombres:
             nombre = f"{nombre} {i}"
         lugares_nombres.append(nombre)
-        
+
         lugares_data.append({
             'nombre': nombre,
             'direccion': fake.address(),
@@ -65,7 +65,7 @@ def generate_data():
     # --- 3. PROYECTOS (Necesario antes de Personas para vincular) ---
     # Generamos nombres primero para usarlos en Personas, luego creamos el DF completo
     proyectos_nombres = [f"Proyecto {fake.word().capitalize()}" for _ in range(NUM_PROYECTOS)]
-    
+
     # --- 4. PERSONAS ---
     personas_data = []
     personas_nombres = []
@@ -73,7 +73,7 @@ def generate_data():
         nombre = fake.first_name()
         apellidos = fake.last_name()
         personas_nombres.append(f"{nombre} {apellidos}")
-        
+
         personas_data.append({
             'nombre': nombre,
             'apellidos': apellidos,
@@ -111,7 +111,7 @@ def generate_data():
         cantidad = round(random.uniform(10.0, 1000.0), 2)
         if not es_ingreso:
             cantidad = -cantidad
-        
+
         finanzas_data.append({
             'fecha_transaccion': fake.date_between(start_date='-2y', end_date='today').strftime('%Y-%m-%d'),
             'cantidad': cantidad,
@@ -127,7 +127,7 @@ def generate_data():
     for _ in range(NUM_ACTIVIDADES):
         responsable = random.choice(socias_ids)
         lugar = random.choice(lugares_nombres) if random.random() > 0.1 else ''
-        
+
         eventos_data.append({
             'nombre': f"Actividad {fake.word().capitalize()}",
             'fecha': fake.date_time_between(start_date='-1y', end_date='+1y').strftime('%Y-%m-%d %H:%M:%S'),
@@ -149,7 +149,7 @@ def generate_data():
         # El importador actual de proyectos NO busca por nombre de socia, espera un string o nada.
         # Para que sea útil, pondremos el nombre de una socia aleatoria, aunque el importador actual
         # de proyectos tiene un TODO sobre cómo vincular responsables.
-        
+
         lugar = random.choice(lugares_nombres) if random.random() > 0.2 else ''
         fecha_inicio = fake.date_between(start_date='-1y', end_date='today')
         fecha_final = fecha_inicio + timedelta(days=random.randint(30, 365))
@@ -170,7 +170,7 @@ def generate_data():
     # --- GUARDAR A EXCEL ---
     output_file = 'datos_falsos_asociacion.xlsx'
     print(f"Guardando en {output_file}...")
-    
+
     with pd.ExcelWriter(output_file, engine='openpyxl') as writer:
         df_socias.to_excel(writer, sheet_name='Socias', index=False)
         df_lugares.to_excel(writer, sheet_name='Lugares', index=False)

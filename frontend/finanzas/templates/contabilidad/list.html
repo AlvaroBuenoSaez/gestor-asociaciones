@@ -326,7 +326,7 @@
         const ctx = document.getElementById('expensesChart').getContext('2d');
         const chartData = JSON.parse('{{ chart_data|escapejs }}');
         const selector = document.getElementById('chartTypeSelector');
-        
+
         let currentChart = null;
 
         function renderChart(type) {

@@ -34,7 +34,7 @@ static_app = StaticFiles(directory=str(FRONTEND_DIR / "static"))
 async def app(scope: Scope, receive: Receive, send: Send):
     if scope["type"] == "http":
         path = scope["path"]
-        
+
         # 1. API & Docs -> FastAPI
         if path.startswith("/api") or path.startswith("/health") or path.startswith("/docs") or path.startswith("/openapi.json"):
             await fastapi_app(scope, receive, send)
@@ -42,20 +42,20 @@ async def app(scope: Scope, receive: Receive, send: Send):
 
         # 2. Static Files -> StaticFiles app
         if path.startswith("/static"):
-            # Strip /static prefix for the StaticFiles app? 
-            # StaticFiles mounts usually expect the prefix to be stripped if mounted, 
-            # but here we are calling it directly. 
-            # Let's check if we can just mount it in a Starlette app wrapper, 
+            # Strip /static prefix for the StaticFiles app?
+            # StaticFiles mounts usually expect the prefix to be stripped if mounted,
+            # but here we are calling it directly.
+            # Let's check if we can just mount it in a Starlette app wrapper,
             # but we are writing a raw ASGI function.
-            # Easier: Use Starlette's Mount if we were building a Starlette app, 
+            # Easier: Use Starlette's Mount if we were building a Starlette app,
             # but we want a custom dispatch.
-            
+
             # Let's use a helper app for static
             # We need to adjust the scope path for StaticFiles if it expects root-relative paths
             # But StaticFiles(directory=...) serves files relative to that directory.
             # If request is /static/css/style.css, we want to serve css/style.css from directory.
             # So we should strip /static.
-            
+
             # Clone scope to not mutate original
             scope_copy = dict(scope)
             scope_copy["path"] = path[len("/static"):]
@@ -73,7 +73,7 @@ async def app(scope: Scope, receive: Receive, send: Send):
         return
 
     # WebSocket?
-    # If Django uses channels, it might need websocket. 
+    # If Django uses channels, it might need websocket.
     # If FastAPI uses websockets, it needs it.
     # For now, let's assume websockets go to Django if not /api?
     # Or just default to Django.
