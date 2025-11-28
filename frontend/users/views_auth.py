@@ -112,7 +112,7 @@ def password_reset_request(request):
             identifier = form.cleaned_data['identifier']
             # Buscar por username o email
             user = User.objects.filter(Q(username=identifier) | Q(email=identifier)).first()
-            
+
             if user and user.email:
                 # Guardar ID en sesión para mostrar el email enmascarado en el siguiente paso
                 request.session['reset_user_id'] = user.id
@@ -121,7 +121,7 @@ def password_reset_request(request):
                 messages.error(request, "No se encontró un usuario con ese nombre o correo electrónico.")
     else:
         form = PasswordResetRequestForm()
-    
+
     return render(request, 'auth/password_reset_request.html', {'form': form})
 
 
@@ -130,9 +130,9 @@ def password_reset_confirm_send(request):
     user_id = request.session.get('reset_user_id')
     if not user_id:
         return redirect('users:password_reset_request')
-    
+
     user = get_object_or_404(User, id=user_id)
-    
+
     # Enmascarar email: e*************@gmail.com
     email_parts = user.email.split('@')
     if len(email_parts) == 2:
@@ -141,11 +141,11 @@ def password_reset_confirm_send(request):
         if len(username_part) > 1:
             masked_username = username_part[0] + '*' * (len(username_part) - 1)
         else:
-            masked_username = username_part 
+            masked_username = username_part
         masked_email = f"{masked_username}@{domain_part}"
     else:
         masked_email = user.email
-        
+
     if request.method == 'POST':
         # Enviar correo
         subject = "Restablecer contraseña - Gestor Asociaciones"
@@ -160,13 +160,13 @@ def password_reset_confirm_send(request):
             'protocol': 'https' if request.is_secure() else 'http',
         }
         email_content = render_to_string(email_template_name, c)
-        
+
         try:
             send_mail(
-                subject, 
-                email_content, 
-                settings.DEFAULT_FROM_EMAIL, 
-                [user.email], 
+                subject,
+                email_content,
+                settings.DEFAULT_FROM_EMAIL,
+                [user.email],
                 fail_silently=False,
                 html_message=email_content # Enviar como HTML también
             )
@@ -177,7 +177,7 @@ def password_reset_confirm_send(request):
         except Exception as e:
              print(f"Error enviando correo: {e}")
              messages.error(request, "Error al enviar el correo. Por favor inténtalo más tarde.")
-             
+
     return render(request, 'auth/password_reset_confirm_send.html', {'masked_email': masked_email})
 
 

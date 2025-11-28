@@ -36,13 +36,13 @@ def list_proyectos(request):
     # Process data
     processed_proyectos = []
     today = datetime.now().date()
-    
+
     for p in proyectos_data:
         try:
             p['fecha_inicio'] = datetime.strptime(p['fecha_inicio'], '%Y-%m-%d').date()
             if p.get('fecha_final'):
                 p['fecha_final'] = datetime.strptime(p['fecha_final'], '%Y-%m-%d').date()
-            
+
             # Calculate state
             if today < p['fecha_inicio']:
                 p['estado'] = 'pendiente'
@@ -53,7 +53,7 @@ def list_proyectos(request):
             else:
                 p['estado'] = 'en_curso'
                 p['estado_display'] = '🔄 En Curso'
-                
+
             processed_proyectos.append(p)
         except (ValueError, TypeError):
             continue
@@ -63,19 +63,19 @@ def list_proyectos(request):
     for p in processed_proyectos:
         if search:
             search_lower = search.lower()
-            if not (search_lower in p['nombre'].lower() or 
+            if not (search_lower in p['nombre'].lower() or
                     (p['descripcion'] and search_lower in p['descripcion'].lower()) or
                     (p.get('lugar') and search_lower in p['lugar'].lower())):
                 continue
-        
+
         if estado and p['estado'] != estado:
             continue
-            
+
         if recursivo == 'si' and not p['recursivo']:
             continue
         if recursivo == 'no' and p['recursivo']:
             continue
-            
+
         filtered_proyectos.append(p)
 
     # Sort
@@ -141,7 +141,7 @@ def create_proyecto(request):
             client = get_client(request)
             try:
                 response = client.post("proyectos/", data=payload)
-                
+
                 # Hybrid approach: Save M2M relationships using Django ORM
                 if response and 'id' in response:
                     new_id = response['id']
@@ -200,7 +200,7 @@ def update_proyecto(request, pk):
             client = get_client(request)
             try:
                 client.put(f"proyectos/{pk}", data=payload)
-                
+
                 # Update M2M relationships via ORM
                 real_obj.socias_involucradas.set(data['socias_involucradas'])
                 real_obj.personas_involucradas.set(data['personas_involucradas'])

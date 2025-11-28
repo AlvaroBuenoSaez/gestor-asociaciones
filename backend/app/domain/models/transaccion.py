@@ -14,12 +14,12 @@ class TransaccionBase(BaseModel):
     fecha_transaccion: date
     fecha_vencimiento: Optional[date] = None
     entidad: Optional[str] = None
-    
+
     # Foreign Keys
     evento_id: Optional[int] = None
     proyecto_id: Optional[int] = None
     socia_id: Optional[int] = None
-    
+
     # Drive
     drive_file_id: Optional[str] = None
     drive_file_link: Optional[str] = None

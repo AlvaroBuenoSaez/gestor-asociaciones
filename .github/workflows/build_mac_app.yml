@@ -113,49 +113,49 @@ jobs:
           ./GestorAsociaciones > app_out.log 2> app_err.log &
           PID=$!
           echo "App running with PID $PID"
-          
+
           # Wait loop
           MAX_RETRIES=20
           COUNT=0
           SUCCESS=0
-          
+
           echo "Waiting for app to start..."
           while [ $COUNT -lt $MAX_RETRIES ]; do
             sleep 3
             # Use curl to get status code. -L follows redirects.
             STATUS=$(curl -s -L -o /dev/null -w "%{http_code}" http://127.0.0.1:8000)
             echo "Attempt $((COUNT+1)): HTTP Status $STATUS"
-            
+
             if [ "$STATUS" == "200" ]; then
               echo "Connection successful!"
               SUCCESS=1
               break
             fi
-            
+
             COUNT=$((COUNT+1))
           done
-          
+
           if [ $SUCCESS -eq 0 ]; then
             echo "::error::Service failed to become healthy."
             echo "=== STDOUT ==="
             tail -n 100 app_out.log
             echo "=== STDERR ==="
             tail -n 100 app_err.log
-            
+
             # Try to get the error page body
             curl -s -L http://127.0.0.1:8000 > last_response_body.html
-            
+
             kill $PID
             exit 1
           fi
-          
+
           # Run Integration Test (Login)
           echo "Running Integration Test..."
           export ADMIN_USER=admin
           export ADMIN_PASS=admin123456
           python ../tests/verify_deployment.py
           TEST_EXIT_CODE=$?
-          
+
           if [ $TEST_EXIT_CODE -ne 0 ]; then
             echo "::error::Integration test failed."
             kill $PID

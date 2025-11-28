@@ -56,11 +56,11 @@ def list_transacciones(request):
         # Búsqueda
         if search:
             search_lower = search.lower()
-            if not (search_lower in t['concepto'].lower() or 
-                    (t['descripcion'] and search_lower in t['descripcion'].lower()) or 
+            if not (search_lower in t['concepto'].lower() or
+                    (t['descripcion'] and search_lower in t['descripcion'].lower()) or
                     (t['entidad'] and search_lower in t['entidad'].lower())):
                 continue
-        
+
         # Tipo
         if tipo == 'ingreso' and t['cantidad'] < 0:
             continue
@@ -102,13 +102,13 @@ def list_transacciones(request):
     # Agrupar datos para gráficas (usando filtered_transacciones para reflejar filtros)
     # Solo consideramos gastos para las gráficas de análisis de gastos
     gastos_para_graficas = [t for t in filtered_transacciones if t['cantidad'] < 0]
-    
+
     # 1. Evolución Mensual
     monthly_data = {}
     for t in gastos_para_graficas:
         month_key = t['fecha_transaccion'].strftime('%Y-%m')
         monthly_data[month_key] = monthly_data.get(month_key, 0) + abs(t['cantidad'])
-    
+
     monthly_labels = sorted(monthly_data.keys())
     monthly_values = [monthly_data[k] for k in monthly_labels]
 
@@ -118,7 +118,7 @@ def list_transacciones(request):
         # Usamos ID como label temporalmente, idealmente sería el nombre
         project_key = f"Proyecto {t['proyecto_id']}" if t['proyecto_id'] else "Sin Proyecto"
         project_data[project_key] = project_data.get(project_key, 0) + abs(t['cantidad'])
-    
+
     project_labels = list(project_data.keys())
     project_values = [project_data[k] for k in project_labels]
 
@@ -127,7 +127,7 @@ def list_transacciones(request):
     for t in gastos_para_graficas:
         entity_key = t['entidad'] or "Sin Entidad"
         entity_data[entity_key] = entity_data.get(entity_key, 0) + abs(t['cantidad'])
-    
+
     entity_labels = list(entity_data.keys())
     entity_values = [entity_data[k] for k in entity_labels]
 
@@ -136,7 +136,7 @@ def list_transacciones(request):
     for t in gastos_para_graficas:
         year_key = str(t['fecha_transaccion'].year)
         annual_data[year_key] = annual_data.get(year_key, 0) + abs(t['cantidad'])
-    
+
     annual_labels = sorted(annual_data.keys())
     annual_values = [annual_data[k] for k in annual_labels]
 
@@ -200,7 +200,7 @@ def create_transaccion(request):
             try:
                 # 1. Crear transacción
                 response = client.post("finanzas/", data=payload)
-                
+
                 # 2. Subir archivo si existe
                 if 'comprobante' in request.FILES and response and 'id' in response:
                     uploaded_file = request.FILES['comprobante']
@@ -260,7 +260,7 @@ def update_transaccion(request, pk):
         t_instance.fecha_transaccion = datetime.strptime(t_data['fecha_transaccion'], '%Y-%m-%d').date()
     if t_data.get('fecha_vencimiento'):
         t_instance.fecha_vencimiento = datetime.strptime(t_data['fecha_vencimiento'], '%Y-%m-%d').date()
-    
+
     # FKs (Solo IDs para el formulario, aunque ModelForm querrá objetos)
     # Para que ModelForm funcione bien con initial, necesitamos pasar los IDs
     # Pero ModelForm espera instancias en instance.fk.
@@ -287,7 +287,7 @@ def update_transaccion(request, pk):
 
             try:
                 client.put(f"finanzas/{pk}", data=payload)
-                
+
                 # Subir archivo si existe
                 if 'comprobante' in request.FILES:
                     uploaded_file = request.FILES['comprobante']
@@ -353,7 +353,7 @@ def download_report(request):
     """Descargar informe de transacciones en Excel"""
     asociacion_id = request.user.profile.asociacion.id
     client = get_client(request)
-    
+
     # Obtener todas las transacciones (sin paginación)
     try:
         transacciones_data = client.get(f"finanzas/?asociacion_id={asociacion_id}") or []

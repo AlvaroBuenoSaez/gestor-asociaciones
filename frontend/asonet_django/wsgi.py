@@ -32,7 +32,7 @@ django_app = get_wsgi_application()
 try:
     from app.main import app as fastapi_app
     fastapi_wsgi = ASGIMiddleware(fastapi_app)
-    
+
     # Montar FastAPI en /api
     application = DispatcherMiddleware(django_app, {
         '/api': fastapi_wsgi

@@ -36,13 +36,13 @@ auth_patterns = [
     path("password-reset/", password_reset_request, name="password_reset_request"),
     path("password-reset/confirm-send/", password_reset_confirm_send, name="password_reset_confirm_send"),
     path("password-reset/done/", password_reset_done, name="password_reset_done"),
-    
+
     # Django Built-in views for the actual reset (token verification and new password)
     path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(
         template_name='auth/password_reset_confirm.html',
         success_url=reverse_lazy('users:password_reset_complete')
     ), name="password_reset_confirm"),
-    
+
     path("reset/complete/", auth_views.PasswordResetCompleteView.as_view(
         template_name='auth/password_reset_complete.html'
     ), name="password_reset_complete"),

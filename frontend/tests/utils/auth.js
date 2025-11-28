@@ -9,7 +9,7 @@ export async function loginAsAdmin(page) {
 }
 
 export async function loginAsAssociationUser(page) {
-    // Assuming we have a test user for associations. 
+    // Assuming we have a test user for associations.
     // If not, we might need to create one or use the admin if they have association access.
     // For now, let's use the admin credentials but navigate to the main dashboard
     await page.goto('http://localhost:8000/admin/login/');
