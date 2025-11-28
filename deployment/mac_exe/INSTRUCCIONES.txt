@@ -5,10 +5,8 @@ GUÍA DE INSTALACIÓN RÁPIDA (MACOS)
    IMPORTANTE: No ejecutes el programa directamente desde el ZIP.
 
 2. Configuración:
-   - Verás un archivo llamado ".env.template".
-   - Renómbralo a ".env" (sí, empieza por punto).
-     Nota: En Finder, los archivos que empiezan por punto pueden estar ocultos.
-     Pulsa Cmd + Shift + . (punto) para verlos.
+   - Verás un archivo llamado "config.env.template".
+   - Renómbralo a "config.env".
    - Ábrelo con TextEdit y configura las opciones si es necesario.
 
 3. Ejecución:

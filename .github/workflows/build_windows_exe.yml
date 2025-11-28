@@ -51,7 +51,7 @@ jobs:
       run: |
         mkdir release_dist
         copy deployment/win_exe/dist/GestorAsociaciones.exe release_dist/
-        copy deployment/win_exe/.env.template release_dist/
+        copy deployment/win_exe/config.env.template release_dist/
         copy deployment/win_exe/INSTRUCCIONES.txt release_dist/
         
     - name: Zip Release

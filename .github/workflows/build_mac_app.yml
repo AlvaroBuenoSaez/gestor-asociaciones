@@ -51,7 +51,7 @@ jobs:
       run: |
         mkdir release_dist_mac
         cp deployment/mac_exe/dist/GestorAsociaciones release_dist_mac/
-        cp deployment/mac_exe/.env.template release_dist_mac/
+        cp deployment/mac_exe/config.env.template release_dist_mac/
         cp deployment/mac_exe/INSTRUCCIONES.txt release_dist_mac/
         
     - name: Zip Release

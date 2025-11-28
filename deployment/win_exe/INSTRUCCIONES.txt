@@ -5,8 +5,8 @@ GUÍA DE INSTALACIÓN RÁPIDA (WINDOWS)
    IMPORTANTE: No ejecutes el programa directamente desde el ZIP.
 
 2. Configuración:
-   - Verás un archivo llamado ".env.template".
-   - Renómbralo a ".env" (sí, empieza por punto).
+   - Verás un archivo llamado "config.env.template".
+   - Renómbralo a "config.env".
    - Ábrelo con el Bloc de Notas y configura las opciones si es necesario (ej. claves de API).
    - Si no tienes claves, el programa funcionará, pero algunas funciones (mapas, correos) estarán limitadas.
 
