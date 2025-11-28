@@ -75,3 +75,45 @@ jobs:
       with:
         name: GestorAsociaciones_Mac
         path: release_dist_mac/GestorAsociaciones_Mac.zip
+
+  test-artifact:
+    name: Test Mac Artifact
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: GestorAsociaciones_Mac
+          path: test_dist
+
+      - name: Unzip and Setup
+        run: |
+          cd test_dist
+          unzip GestorAsociaciones_Mac.zip
+          # Create config.env from template or scratch
+          echo "SECRET_KEY=testing_key_mac" > config.env
+          echo "DEBUG=False" >> config.env
+          echo "API_BASE_URL=http://localhost:8000/api/v1" >> config.env
+          chmod +x GestorAsociaciones
+
+      - name: Run and Test Connection
+        run: |
+          cd test_dist
+          # Run in background
+          ./GestorAsociaciones &
+          PID=$!
+          echo "App running with PID $PID"
+          
+          # Wait for app to initialize (migrations take time)
+          echo "Waiting for app to start..."
+          sleep 15
+          
+          # Test connection
+          echo "Testing connection to localhost:8000..."
+          curl -v http://127.0.0.1:8000 || exit 1
+          
+          echo "Connection successful!"
+          # Kill app
+          kill $PID

@@ -15,6 +15,25 @@ else:
     BASE_DIR = Path(__file__).resolve().parent.parent.parent / 'frontend'
     sys.path.append(str(BASE_DIR))
 
+# --- IMPORTACIONES FORZADAS PARA PYINSTALLER ---
+# PyInstaller a veces no detecta importaciones dinámicas (como las de Django).
+# Al importarlas aquí dentro de un bloque 'if False', forzamos a que las incluya
+# en el paquete final sin ejecutarlas realmente.
+if False:
+    import asonet_django.settings
+    import asonet_django.urls
+    import asonet_django.wsgi
+    import django.core.management
+    import django.db.migrations
+    # Apps
+    import core.apps
+    import users.apps
+    import socias.apps
+    import finanzas.apps
+    import eventos.apps
+    import proyectos.apps
+    import entidades.apps
+
 def open_browser():
     """Abre el navegador automáticamente"""
     webbrowser.open("http://127.0.0.1:8000")
