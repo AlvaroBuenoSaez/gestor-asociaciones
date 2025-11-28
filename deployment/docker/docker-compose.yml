@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ../../
+      dockerfile: deployment/docker/Dockerfile
+    volumes:
+      - ../../:/app
+      # Excluir venv local del contenedor para usar el del sistema (dentro del docker)
+      - /app/.venv
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - SECRET_KEY=dev_secret_key
+      - API_BASE_URL=http://localhost:8000/api/v1
+      # Si usas Geoapify, descomenta y añade tu clave
+      # - GEOAPIFY_API_KEY=tu_clave_aqui
+    command: python frontend/manage.py runserver 0.0.0.0:8000
