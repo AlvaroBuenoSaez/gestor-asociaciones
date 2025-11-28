@@ -1,4 +1,4 @@
-name: Build Windows Executable
+name: Build macOS Executable
 
 on:
   release:
@@ -10,8 +10,8 @@ permissions:
 
 jobs:
   build:
-    name: Build EXE on Windows
-    runs-on: windows-latest
+    name: Build Executable on macOS
+    runs-on: macos-latest
 
     steps:
     - name: Checkout code
@@ -44,28 +44,28 @@ jobs:
 
     - name: Build Executable with PyInstaller
       run: |
-        cd deployment/win_exe
-        pyinstaller gestor.spec
+        cd deployment/mac_exe
+        pyinstaller gestor_mac.spec
 
     - name: Prepare Release Package
       run: |
-        mkdir release_dist
-        copy deployment/win_exe/dist/GestorAsociaciones.exe release_dist/
-        copy deployment/win_exe/.env.template release_dist/
-        copy deployment/win_exe/INSTRUCCIONES.txt release_dist/
+        mkdir release_dist_mac
+        cp deployment/mac_exe/dist/GestorAsociaciones release_dist_mac/
+        cp deployment/mac_exe/.env.template release_dist_mac/
+        cp deployment/mac_exe/INSTRUCCIONES.txt release_dist_mac/
         
     - name: Zip Release
       uses: thedoctor0/zip-release@0.7.5
       with:
         type: 'zip'
-        filename: 'GestorAsociaciones_Win64.zip'
-        directory: 'release_dist'
+        filename: 'GestorAsociaciones_Mac.zip'
+        directory: 'release_dist_mac'
 
     - name: Upload Release Asset
       uses: softprops/action-gh-release@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: release_dist/GestorAsociaciones_Win64.zip
+        files: release_dist_mac/GestorAsociaciones_Mac.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -73,5 +73,5 @@ jobs:
       uses: actions/upload-artifact@v4
       if: github.event_name == 'workflow_dispatch'
       with:
-        name: GestorAsociaciones_Win64
-        path: release_dist/GestorAsociaciones_Win64.zip
+        name: GestorAsociaciones_Mac
+        path: release_dist_mac/GestorAsociaciones_Mac.zip
