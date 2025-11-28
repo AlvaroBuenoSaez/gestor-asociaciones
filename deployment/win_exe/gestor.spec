@@ -9,8 +9,6 @@ block_cipher = None
 FRONTEND_DIR = os.path.abspath('../../frontend')
 
 datas = [
-    # Plantillas base
-    (os.path.join(FRONTEND_DIR, 'templates'), 'templates'),
     # Archivos estáticos (deben haber sido recolectados previamente con collectstatic)
     (os.path.join(FRONTEND_DIR, 'staticfiles'), 'staticfiles'),
 ]
