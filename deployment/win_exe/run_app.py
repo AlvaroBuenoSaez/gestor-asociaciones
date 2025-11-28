@@ -31,6 +31,12 @@ if __name__ == "__main__":
         # Esto es necesario para que PyInstaller encuentre el módulo correctamente
         from asonet_django.asgi import application
         
+        # Ejecutar migraciones automáticamente al inicio
+        # Esto asegura que la DB tenga las tablas necesarias si es la primera ejecución
+        print("Verificando estado de la base de datos...")
+        from django.core.management import call_command
+        call_command('migrate', interactive=False)
+        
         # Configuración del servidor
         config = uvicorn.Config(
             app=application,

@@ -41,15 +41,19 @@ hiddenimports = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # Añadir configuración del proyecto
-    'asonet_django',
-    'asonet_django.settings',
-    'asonet_django.urls',
-    'asonet_django.asgi',
-    # Añadir apps propias a hiddenimports por si acaso
-    'core', 'users', 'socias', 'finanzas', 'eventos', 'proyectos', 'entidades',
-    'core.apps', 'users.apps', 'socias.apps', 'finanzas.apps', 'eventos.apps', 'proyectos.apps', 'entidades.apps',
+    'django.core.mail.backends.smtp',
+    'django.core.mail.backends.console',
+    'django.db.backends.sqlite3',
 ]
+
+# Recolectar automáticamente todos los submódulos de nuestras apps
+# Esto asegura que se incluyan migrations, templatetags, context_processors, utils, etc.
+project_apps = ['asonet_django', 'core', 'users', 'socias', 'finanzas', 'eventos', 'proyectos', 'entidades']
+for app in project_apps:
+    try:
+        hiddenimports.extend(collect_submodules(app))
+    except Exception as e:
+        print(f"Advertencia: No se pudieron recolectar submódulos de {app}: {e}")
 
 a = Analysis(
     ['run_app.py'],
