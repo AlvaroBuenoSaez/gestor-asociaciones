@@ -30,7 +30,11 @@ else:
 # Load environment variables from .env file in the root of the workspace
 # En modo EXE, buscamos el .env junto al ejecutable
 if getattr(sys, 'frozen', False):
-    env_path = DB_DIR / '.env'
+    # Prioridad 1: config.env (para evitar problemas con archivos ocultos en Mac)
+    env_path = DB_DIR / 'config.env'
+    if not env_path.exists():
+        # Prioridad 2: .env (legacy)
+        env_path = DB_DIR / '.env'
 else:
     env_path = BASE_DIR.parent / '.env'
 
@@ -48,7 +52,12 @@ else:
 SECRET_KEY = 'django-insecure-=r)7a+lamvyun3ec&g67sx8u6n1^p*pa-q^0zykwawj9u@&=$e'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Si es un ejecutable (frozen), por defecto DEBUG es False para asegurar que Whitenoise sirva los estáticos.
+# Si es desarrollo, por defecto es True.
+if getattr(sys, 'frozen', False):
+    DEBUG = os.getenv('DEBUG', 'False') == 'True'
+else:
+    DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['*']  # Permitir todos los hosts para facilitar despliegue en PythonAnywhere
 
