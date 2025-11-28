@@ -1,12 +1,14 @@
 """
 Vistas para autenticación (login, logout, registro)
 """
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache
+from .models import AdminInvitation
+from .forms import AdminRegistrationForm
 
 
 @csrf_protect
@@ -43,6 +45,55 @@ def user_logout(request):
     if username:
         messages.success(request, f'¡Hasta luego, {username}!')
     return redirect('users:login')
+
+
+def accept_invite(request, token):
+    """Vista para aceptar invitación de administrador"""
+    invitation = get_object_or_404(AdminInvitation, token=token)
+    
+    if not invitation.is_valid:
+        messages.error(request, "Esta invitación ha expirado o ya ha sido usada.")
+        return redirect('users:login')
+        
+    if request.method == 'POST':
+        form = AdminRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.email = invitation.email
+            
+            if invitation.asociacion:
+                # Es un administrador de asociación (Dashboard)
+                user.is_staff = False
+                user.is_superuser = False
+            else:
+                # Es un superusuario (Admin Site)
+                user.is_staff = True
+                user.is_superuser = True
+            
+            user.save()
+            
+            # El perfil se crea automáticamente por la señal post_save
+            if invitation.asociacion:
+                profile = user.profile
+                profile.asociacion = invitation.asociacion
+                profile.role = 'admin'
+                profile.save()
+            
+            invitation.used = True
+            invitation.save()
+            
+            login(request, user)
+            
+            if user.is_superuser:
+                messages.success(request, f"¡Bienvenido Superusuario {user.username}!")
+                return redirect('admin:index')
+            else:
+                messages.success(request, f"¡Bienvenido/a {user.username}! Ahora eres administrador de {invitation.asociacion}.")
+                return redirect('users:dashboard')
+    else:
+        form = AdminRegistrationForm()
+        
+    return render(request, 'auth/accept_invite.html', {'form': form, 'email': invitation.email})
 
 
 def home(request):

@@ -4,7 +4,7 @@ Organizadas por categorías de funcionalidad
 """
 from django.urls import path, include
 from . import views
-from .views_auth import user_login, user_logout, home
+from .views_auth import user_login, user_logout, home, accept_invite
 from .views_dashboard import (
     dashboard, drive_callback,
     backend_management, drive_upload, drive_delete, drive_create_folder, drive_select_folder,
@@ -25,6 +25,7 @@ auth_patterns = [
     path("", home, name="home"),
     path("login/", user_login, name="login"),
     path("logout/", user_logout, name="logout"),
+    path("invite/<uuid:token>/", accept_invite, name="accept_invite"),
 ]
 
 # =============================================================================

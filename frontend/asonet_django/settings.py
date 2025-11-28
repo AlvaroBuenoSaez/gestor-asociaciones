@@ -43,7 +43,9 @@ GEOAPIFY_BIAS_LAT = os.getenv('GEOAPIFY_BIAS_LAT', '40.416775') # Default Madrid
 GEOAPIFY_BIAS_LON = os.getenv('GEOAPIFY_BIAS_LON', '-3.703790') # Default Madrid
 GEOAPIFY_COUNTRY_CODE = os.getenv('GEOAPIFY_COUNTRY_CODE', 'es')
 
-
+# API Configuration
+# En producción (PythonAnywhere), esto debe ser https://tu-usuario.pythonanywhere.com/api/v1
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:8000/api/v1')
 
 
 # Application definition
@@ -66,6 +68,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Whitenoise para archivos estáticos en Render
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -154,3 +157,20 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# --- Configuración de Correo ---
+# Si existen variables de entorno para email, usa SMTP (correo real).
+# Si no, usa la consola (desarrollo).
+
+if os.getenv('EMAIL_HOST_USER'):
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+    DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+else:
+    # Modo Desarrollo: Imprime en consola
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'admin@asonet.local'

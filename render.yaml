@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: gestor-asociaciones
+    env: python
+    buildCommand: ./build.sh
+    startCommand: gunicorn wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: asonet_django.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 4

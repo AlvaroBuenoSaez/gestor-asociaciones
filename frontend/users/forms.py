@@ -75,6 +75,21 @@ class EditUserForm(forms.ModelForm):
             self.fields['role'].initial = self.instance.profile.role
 
 
+class AdminRegistrationForm(UserCreationForm):
+    """Formulario para registro de administradores invitados"""
+    class Meta:
+        model = User
+        fields = ['username']
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['password1'].widget.attrs['class'] = 'form-control'
+        self.fields['password2'].widget.attrs['class'] = 'form-control'
+
+
 # =============================================================================
 # FORMULARIOS PARA GESTIÓN DE ASOCIACIONES (Para superusuarios)
 # =============================================================================

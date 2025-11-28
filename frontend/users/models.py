@@ -6,6 +6,45 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from core.models import AsociacionVecinal
+import uuid
+from django.utils import timezone
+from datetime import timedelta
+
+
+class AdminInvitation(models.Model):
+    """
+    Invitaciones para nuevos administradores (superusuarios o de asociación)
+    """
+    email = models.EmailField(unique=True, verbose_name="Correo Electrónico")
+    asociacion = models.ForeignKey(
+        AsociacionVecinal, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True, 
+        verbose_name="Asociación (Dejar vacío para Superusuario)",
+        help_text="Si se selecciona, el usuario será administrador de esta asociación. Si se deja vacío, será Superusuario del sistema."
+    )
+    token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(editable=False)
+    used = models.BooleanField(default=False)
+    invited_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="invitations_sent")
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=15)
+        super().save(*args, **kwargs)
+
+    @property
+    def is_valid(self):
+        return not self.used and timezone.now() < self.expires_at
+
+    def __str__(self):
+        return f"Invitación para {self.email}"
+
+    class Meta:
+        verbose_name = "Invitación de Administrador"
+        verbose_name_plural = "Invitaciones de Administradores"
 
 
 class UserProfile(models.Model):

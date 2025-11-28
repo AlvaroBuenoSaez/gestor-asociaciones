@@ -37,3 +37,6 @@ python-dotenv
 # --- PythonAnywhere / Deployment Dependencies ---
 a2wsgi
 werkzeug
+gunicorn
+whitenoise
+psycopg2-binary

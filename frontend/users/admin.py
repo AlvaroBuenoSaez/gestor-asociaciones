@@ -2,8 +2,11 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User, Group
 from django.db import models
+from django.urls import reverse
+from django.core.mail import send_mail
+from django.conf import settings
 from core.models import AsociacionVecinal
-from .models import UserProfile
+from .models import UserProfile, AdminInvitation
 
 
 class UserProfileInline(admin.StackedInline):
@@ -63,6 +66,45 @@ admin.site.unregister(Group)  # Ocultar grupos - no los necesitamos
 
 # Registrar nuestro admin personalizado
 admin.site.register(User, CustomUserAdmin)
+
+@admin.register(AdminInvitation)
+class AdminInvitationAdmin(admin.ModelAdmin):
+    list_display = ('email', 'asociacion', 'created_at', 'expires_at', 'used', 'invited_by', 'status_display')
+    readonly_fields = ('token', 'created_at', 'expires_at', 'used', 'invited_by')
+    
+    def save_model(self, request, obj, form, change):
+        if not change: # Creating new
+            obj.invited_by = request.user
+            super().save_model(request, obj, form, change)
+            
+            # Send email
+            try:
+                path = reverse('users:accept_invite', args=[obj.token])
+                full_url = request.build_absolute_uri(path)
+                
+                tipo_usuario = f"administrador de {obj.asociacion}" if obj.asociacion else "Superusuario"
+                
+                send_mail(
+                    'Invitación para Administrador - Gestor Asociaciones',
+                    f'Hola,\n\nHas sido invitado para ser {tipo_usuario}.\n\nHaz clic aquí para registrarte (válido por 15 min): {full_url}',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [obj.email],
+                    fail_silently=False,
+                )
+                self.message_user(request, f"Invitación enviada a {obj.email}")
+            except Exception as e:
+                self.message_user(request, f"Error enviando email: {str(e)}", level='ERROR')
+        else:
+            super().save_model(request, obj, form, change)
+
+    def status_display(self, obj):
+        if obj.used:
+            return "Usada"
+        if obj.is_valid:
+            return "Válida"
+        return "Expirada"
+    status_display.short_description = "Estado"
+
 
 # Configuración del sitio admin
 admin.site.site_header = "AsoNet - Administración"
