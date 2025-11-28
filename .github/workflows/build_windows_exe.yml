@@ -25,12 +25,17 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
 
+    - name: Create dummy .env for build
+      run: |
+        echo "SECRET_KEY=build_dummy_key" > frontend/.env
+        echo "DEBUG=False" >> frontend/.env
+        echo "API_BASE_URL=http://localhost:8000/api/v1" >> frontend/.env
+
     - name: Collect Static Files
       run: |
         cd frontend
         python manage.py collectstatic --noinput
       env:
-        # Asegurar que no falle si faltan variables de entorno en settings
         DJANGO_SETTINGS_MODULE: asonet_django.settings
 
     - name: Build Executable with PyInstaller
