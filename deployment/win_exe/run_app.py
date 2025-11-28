@@ -43,6 +43,12 @@ if __name__ == "__main__":
         server.run()
         
     except Exception as e:
+        # Loguear error a un archivo para depuración
+        with open("error_log.txt", "w") as f:
+            f.write(f"Error fatal: {e}\n")
+            import traceback
+            traceback.print_exc(file=f)
+
         print(f"Error fatal: {e}")
         import traceback
         traceback.print_exc()

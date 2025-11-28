@@ -110,6 +110,18 @@ TEMPLATES = [
     },
 ]
 
+# Configuración específica para PyInstaller: Añadir rutas de plantillas explícitamente
+if getattr(sys, 'frozen', False):
+    # Lista de apps que tienen templates
+    APPS_WITH_TEMPLATES = ['core', 'users', 'socias', 'finanzas', 'eventos', 'proyectos', 'entidades']
+    for app in APPS_WITH_TEMPLATES:
+        # En el spec file, copiamos templates a: app/templates
+        # BASE_DIR es sys._MEIPASS
+        template_path = BASE_DIR / app / 'templates'
+        if template_path.exists():
+            TEMPLATES[0]['DIRS'].append(str(template_path))
+
+
 WSGI_APPLICATION = 'asonet_django.wsgi.application'
 
 
