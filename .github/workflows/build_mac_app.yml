@@ -99,8 +99,8 @@ jobs:
           echo "SECRET_KEY=testing_key_mac" > config.env
           echo "DEBUG=True" >> config.env
           echo "API_BASE_URL=http://localhost:8000/api/v1" >> config.env
-          echo "ADMIN_USER=admin" >> config.env
-          echo "ADMIN_PASS=admin123456" >> config.env
+          echo "ADMIN_USER=mac_file_user" >> config.env
+          echo "ADMIN_PASS=mac_file_pass_123" >> config.env
           chmod +x GestorAsociaciones
 
       - name: Install Test Dependencies
@@ -151,8 +151,10 @@ jobs:
 
           # Run Integration Test (Login)
           echo "Running Integration Test..."
-          export ADMIN_USER=admin
-          export ADMIN_PASS=admin123456
+          # We pass the expected credentials to the test script via env vars,
+          # BUT the app itself (started above) must have read them from config.env
+          export ADMIN_USER=mac_file_user
+          export ADMIN_PASS=mac_file_pass_123
           python ../tests/verify_deployment.py
           TEST_EXIT_CODE=$?
 
