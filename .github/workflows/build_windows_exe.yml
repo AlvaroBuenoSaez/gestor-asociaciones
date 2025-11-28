@@ -53,7 +53,7 @@ jobs:
         copy deployment/win_exe/dist/GestorAsociaciones.exe release_dist/
         copy deployment/win_exe/config.env.template release_dist/
         copy deployment/win_exe/INSTRUCCIONES.txt release_dist/
-        
+
     - name: Zip Release
       uses: thedoctor0/zip-release@0.7.5
       with:
@@ -92,36 +92,70 @@ jobs:
         run: |
           cd test_dist
           Expand-Archive -Path GestorAsociaciones_Win64.zip -DestinationPath .
-          # Create config.env
+          # Create config.env with DEBUG=True to see errors in logs
           echo "SECRET_KEY=testing_key_win" > config.env
-          echo "DEBUG=False" >> config.env
+          echo "DEBUG=True" >> config.env
           echo "API_BASE_URL=http://localhost:8000/api/v1" >> config.env
 
       - name: Run and Test Connection
         shell: powershell
         run: |
           cd test_dist
-          # Start process in background
-          $process = Start-Process -FilePath ".\GestorAsociaciones.exe" -PassThru
+          # Start process redirecting stdout/stderr so we can inspect tracebacks
+          $out = Join-Path $PWD "app_out.log"
+          $err = Join-Path $PWD "app_err.log"
+          $process = Start-Process -FilePath ".\GestorAsociaciones.exe" -RedirectStandardOutput $out -RedirectStandardError $err -NoNewWindow -PassThru
           echo "App running with ID $($process.Id)"
           
-          # Wait for app to initialize
-          echo "Waiting for app to start..."
-          Start-Sleep -Seconds 15
-          
-          # Test connection
-          echo "Testing connection to localhost:8000..."
-          try {
-            $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000" -UseBasicParsing
-            if ($response.StatusCode -eq 200) {
-              echo "Connection successful!"
-            } else {
-              echo "Connection failed with status code $($response.StatusCode)"
-              exit 1
+          # Wait and poll until service is up (or timeout)
+          $ready = $false
+          $maxAttempts = 20
+          $attempt = 0
+          while (-not $ready -and $attempt -lt $maxAttempts) {
+            Start-Sleep -Seconds 3
+            $attempt++
+            try {
+              $resp = Invoke-WebRequest -Uri "http://127.0.0.1:8000" -UseBasicParsing -TimeoutSec 5
+              if ($resp.StatusCode -eq 200) {
+                Write-Host "Connection successful!"
+                $ready = $true
+                break
+              } else {
+                Write-Host "HTTP $($resp.StatusCode) on attempt $attempt"
+              }
+            } catch {
+              Write-Host "Attempt $attempt: not ready yet ($_)"
             }
-          } catch {
-            echo "Connection failed: $_"
+          }
+
+          if (-not $ready) {
+            Write-Host "Service did not become healthy. Dumping last lines of logs for debugging..."
+            if (Test-Path $out) { Get-Content $out -Tail 200 -ErrorAction SilentlyContinue | Write-Host }
+            if (Test-Path $err) { Get-Content $err -Tail 200 -ErrorAction SilentlyContinue | Write-Host }
+            # If the server returned a non-200 with body, try to save it (helpful for Django error pages)
+            try {
+              $resp2 = Invoke-WebRequest -Uri "http://127.0.0.1:8000" -UseBasicParsing -ErrorAction SilentlyContinue
+              if ($resp2 -and $resp2.Content) {
+                $resp2.Content | Out-File -FilePath "last_response_body.html" -Encoding utf8
+                Write-Host "Saved response body to last_response_body.html"
+              }
+            } catch {}
+            # Stop process
+            Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            # Upload logs as failure artifacts
+            Write-Host "::error::App failed to become healthy, see app_out.log / app_err.log / last_response_body.html"
             exit 1
-          } finally {
+          } else {
+            # successful: stop app
             Stop-Process -Id $process.Id -Force
           }
+
+      - name: Upload debug logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe-debug-logs
+          path: |
+            test_dist/app_out.log
+            test_dist/app_err.log
+            test_dist/last_response_body.html
