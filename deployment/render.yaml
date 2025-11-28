@@ -2,7 +2,7 @@ services:
   - type: web
     name: gestor-asociaciones
     env: python
-    buildCommand: ./build.sh
+    buildCommand: ./deployment/build.sh
     startCommand: gunicorn wsgi:application
     envVars:
       - key: PYTHON_VERSION

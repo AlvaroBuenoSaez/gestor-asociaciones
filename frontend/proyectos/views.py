@@ -1,240 +1,255 @@
 """
-Vistas para gestión de proyectos con CRUD completo
+Vistas para gestión de proyectos consumiendo la API
 """
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import View
 from django.contrib import messages
-from django.db.models import Q
-from users.utils import is_association_admin
-from core.mixins import (
-    AssociationFilterMixin,
-    AssociationRequiredMixin,
-    AdminRequiredMixin,
-    AutoAssignAssociationMixin
-)
-from .models import Proyecto
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from datetime import datetime
+import requests
+
+from users.utils import is_association_admin, association_required
+from core.api import get_client
 from .forms import ProyectoForm
+from .models import Proyecto # Import needed for Form
 
+@login_required
+@association_required
+def list_proyectos(request):
+    asociacion_id = request.user.profile.asociacion.id
+    client = get_client(request)
 
-class ProyectoListView(AssociationRequiredMixin, AssociationFilterMixin, ListView):
-    """Vista para listar proyectos de la asociación con búsqueda y filtros"""
-    model = Proyecto
-    template_name = 'proyectos/list.html'
-    context_object_name = 'proyectos'
-    paginate_by = 20
+    search = request.GET.get('search', '')
+    estado = request.GET.get('estado', '')
+    recursivo = request.GET.get('recursivo', '')
+    order = request.GET.get('order', '-fecha_inicio')
+    page_number = request.GET.get('page', 1)
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        search = self.request.GET.get('search', '').strip()
-        estado = self.request.GET.get('estado', '')
-        recursivo = self.request.GET.get('recursivo', '')
-        order = self.request.GET.get('order', '-fecha_inicio')
+    try:
+        proyectos_data = client.get(f"proyectos/?asociacion_id={asociacion_id}") or []
+    except requests.RequestException as e:
+        messages.error(request, f"Error al conectar con el servidor: {str(e)}")
+        proyectos_data = []
 
-        # Filtrar por búsqueda (nombre, descripción, responsable, lugar)
-        if search:
-            queryset = queryset.filter(
-                Q(nombre__icontains=search) |
-                Q(descripcion__icontains=search) |
-                Q(responsable__icontains=search) |
-                Q(lugar__icontains=search) |
-                Q(involucrados__icontains=search) |
-                Q(materiales__icontains=search)
-            )
-
-        # Filtrar por estado (usando lógica manual ya que es una propiedad calculada)
-        if estado:
-            from django.utils import timezone
-            hoy = timezone.now().date()
-
-            if estado == 'pendiente':
-                queryset = queryset.filter(fecha_inicio__gt=hoy)
-            elif estado == 'finalizado':
-                queryset = queryset.filter(fecha_final__lt=hoy, fecha_final__isnull=False)
-            elif estado == 'en_curso':
-                queryset = queryset.filter(
-                    Q(fecha_inicio__lte=hoy) &
-                    (Q(fecha_final__gte=hoy) | Q(fecha_final__isnull=True))
-                )
-
-        # Filtrar por recursivo
-        if recursivo == 'si':
-            queryset = queryset.filter(recursivo=True)
-        elif recursivo == 'no':
-            queryset = queryset.filter(recursivo=False)
-
-        # Ordenar
-        order_mapping = {
-            'fecha_inicio': 'fecha_inicio',
-            '-fecha_inicio': '-fecha_inicio',
-            'fecha_final': 'fecha_final',
-            '-fecha_final': '-fecha_final',
-            'nombre': 'nombre',
-            '-nombre': '-nombre'
-        }
-
-        if order in order_mapping:
-            queryset = queryset.order_by(order_mapping[order])
-        else:
-            queryset = queryset.order_by('-fecha_inicio')  # Por defecto: más recientes primero
-
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'proyectos'
-
-        # Obtener asociación del usuario de forma segura
+    # Process data
+    processed_proyectos = []
+    today = datetime.now().date()
+    
+    for p in proyectos_data:
         try:
-            if self.request.user.is_authenticated:
-                context['asociacion'] = self.request.user.profile.asociacion  # type: ignore
-        except AttributeError:
-            pass
-
-        context['is_admin'] = is_association_admin(self.request.user)
-
-        # Parámetros de búsqueda actuales
-        context['current_search'] = self.request.GET.get('search', '')
-        context['current_estado'] = self.request.GET.get('estado', '')
-        context['current_recursivo'] = self.request.GET.get('recursivo', '')
-        context['current_order'] = self.request.GET.get('order', '-fecha_inicio')
-
-        # Obtener todos los proyectos de la asociación para estadísticas
-        all_proyectos = super().get_queryset()
-        filtered_proyectos = self.get_queryset()
-
-        # Estadísticas generales (calculadas manualmente ya que estado es una propiedad)
-        total_proyectos = all_proyectos.count()
-
-        # Calcular estadísticas por estado usando lógica manual
-        from django.utils import timezone
-        hoy = timezone.now().date()
-
-        pendientes = 0
-        en_curso = 0
-        finalizados = 0
-        recursivos = all_proyectos.filter(recursivo=True).count()
-
-        for proyecto in all_proyectos:
-            if hoy < proyecto.fecha_inicio:
-                pendientes += 1
-            elif proyecto.fecha_final and hoy > proyecto.fecha_final:
-                finalizados += 1
+            p['fecha_inicio'] = datetime.strptime(p['fecha_inicio'], '%Y-%m-%d').date()
+            if p.get('fecha_final'):
+                p['fecha_final'] = datetime.strptime(p['fecha_final'], '%Y-%m-%d').date()
+            
+            # Calculate state
+            if today < p['fecha_inicio']:
+                p['estado'] = 'pendiente'
+                p['estado_display'] = '⏳ Pendiente'
+            elif p.get('fecha_final') and today > p['fecha_final']:
+                p['estado'] = 'finalizado'
+                p['estado_display'] = '✅ Finalizado'
             else:
-                en_curso += 1
+                p['estado'] = 'en_curso'
+                p['estado_display'] = '🔄 En Curso'
+                
+            processed_proyectos.append(p)
+        except (ValueError, TypeError):
+            continue
 
-        # Estadísticas filtradas
-        filtered_count = filtered_proyectos.count()
+    # Filter
+    filtered_proyectos = []
+    for p in processed_proyectos:
+        if search:
+            search_lower = search.lower()
+            if not (search_lower in p['nombre'].lower() or 
+                    (p['descripcion'] and search_lower in p['descripcion'].lower()) or
+                    (p.get('lugar') and search_lower in p['lugar'].lower())):
+                continue
+        
+        if estado and p['estado'] != estado:
+            continue
+            
+        if recursivo == 'si' and not p['recursivo']:
+            continue
+        if recursivo == 'no' and p['recursivo']:
+            continue
+            
+        filtered_proyectos.append(p)
 
-        context.update({
-            'total_proyectos': total_proyectos,
-            'proyectos_pendientes': pendientes,
-            'proyectos_en_curso': en_curso,
-            'proyectos_finalizados': finalizados,
-            'proyectos_recursivos': recursivos,
-            'filtered_count': filtered_count,
-        })
+    # Sort
+    reverse = order.startswith('-')
+    sort_key = order.lstrip('-')
+    filtered_proyectos.sort(key=lambda x: x.get(sort_key) or '', reverse=reverse)
 
-        # Opciones para filtros
-        estados_choices = [
-            ('pendiente', 'Pendiente'),
-            ('en_curso', 'En Curso'),
-            ('finalizado', 'Finalizado')
-        ]
-        context['estados'] = estados_choices
-        context['recursivo_choices'] = [('si', 'Sí'), ('no', 'No')]
+    # Pagination
+    paginator = Paginator(filtered_proyectos, 20)
+    page_obj = paginator.get_page(page_number)
 
-        return context
+    # Stats
+    total_proyectos = len(processed_proyectos)
+    pendientes = sum(1 for p in processed_proyectos if p['estado'] == 'pendiente')
+    en_curso = sum(1 for p in processed_proyectos if p['estado'] == 'en_curso')
+    finalizados = sum(1 for p in processed_proyectos if p['estado'] == 'finalizado')
+    recursivos = sum(1 for p in processed_proyectos if p['recursivo'])
 
+    context = {
+        'section': 'proyectos',
+        'asociacion': request.user.profile.asociacion,
+        'is_admin': is_association_admin(request.user),
+        'proyectos': page_obj,
+        'page_obj': page_obj,
+        'current_search': search,
+        'current_estado': estado,
+        'current_recursivo': recursivo,
+        'current_order': order,
+        'total_proyectos': total_proyectos,
+        'proyectos_pendientes': pendientes,
+        'proyectos_en_curso': en_curso,
+        'proyectos_finalizados': finalizados,
+        'proyectos_recursivos': recursivos,
+        'filtered_count': len(filtered_proyectos),
+        'estados': [('pendiente', 'Pendiente'), ('en_curso', 'En Curso'), ('finalizado', 'Finalizado')],
+        'recursivo_choices': [('si', 'Sí'), ('no', 'No')]
+    }
 
-class ProyectoCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateView):
-    """Vista para crear nuevo proyecto (solo admins)"""
-    model = Proyecto
-    form_class = ProyectoForm
-    template_name = 'proyectos/create.html'
-    success_url = reverse_lazy('proyectos:list')
+    return render(request, 'proyectos/list.html', context)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        if self.request.user.is_authenticated and hasattr(self.request.user, 'profile'):
-             kwargs['asociacion'] = self.request.user.profile.asociacion
-        return kwargs
+@login_required
+@association_required
+def create_proyecto(request):
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('proyectos:list')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'proyectos'
-        context['title'] = 'Nuevo Proyecto'
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, asociacion=request.user.profile.asociacion)
+        if form.is_valid():
+            data = form.cleaned_data
+            payload = {
+                "asociacion_id": request.user.profile.asociacion.id,
+                "nombre": data['nombre'],
+                "responsable_id": data['responsable'].id if data['responsable'] else None,
+                "descripcion": data['descripcion'],
+                "lugar_fk_id": data['lugar_fk'].id if data['lugar_fk'] else None,
+                "fecha_inicio": data['fecha_inicio'].isoformat(),
+                "fecha_final": data['fecha_final'].isoformat() if data['fecha_final'] else None,
+                "recursivo": data['recursivo'],
+            }
 
-        # Obtener asociación del usuario de forma segura
+            client = get_client(request)
+            try:
+                response = client.post("proyectos/", data=payload)
+                
+                # Hybrid approach: Save M2M relationships using Django ORM
+                if response and 'id' in response:
+                    new_id = response['id']
+                    try:
+                        p_obj = Proyecto.objects.get(id=new_id)
+                        p_obj.socias_involucradas.set(data['socias_involucradas'])
+                        p_obj.personas_involucradas.set(data['personas_involucradas'])
+                        p_obj.materiales_necesarios.set(data['materiales_necesarios'])
+                    except Proyecto.DoesNotExist:
+                        pass
+
+                messages.success(request, f"Proyecto {data['nombre']} creado exitosamente.")
+                return redirect('proyectos:list')
+            except requests.RequestException as e:
+                messages.error(request, f"Error al crear proyecto: {str(e)}")
+        else:
+            messages.error(request, "Corrige los errores.")
+    else:
+        form = ProyectoForm(asociacion=request.user.profile.asociacion)
+
+    context = {
+        'section': 'proyectos',
+        'title': 'Nuevo Proyecto',
+        'form': form
+    }
+    return render(request, 'proyectos/create.html', context)
+
+@login_required
+@association_required
+def update_proyecto(request, pk):
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('proyectos:list')
+
+    # Use ORM to get the object for the form (to populate M2M correctly)
+    try:
+        real_obj = Proyecto.objects.get(id=pk, asociacion=request.user.profile.asociacion)
+    except Proyecto.DoesNotExist:
+        messages.error(request, "Proyecto no encontrado.")
+        return redirect('proyectos:list')
+
+    if request.method == 'POST':
+        form = ProyectoForm(request.POST, instance=real_obj, asociacion=request.user.profile.asociacion)
+        if form.is_valid():
+            data = form.cleaned_data
+            payload = {
+                "nombre": data['nombre'],
+                "responsable_id": data['responsable'].id if data['responsable'] else None,
+                "descripcion": data['descripcion'],
+                "lugar_fk_id": data['lugar_fk'].id if data['lugar_fk'] else None,
+                "fecha_inicio": data['fecha_inicio'].isoformat(),
+                "fecha_final": data['fecha_final'].isoformat() if data['fecha_final'] else None,
+                "recursivo": data['recursivo']
+            }
+
+            client = get_client(request)
+            try:
+                client.put(f"proyectos/{pk}", data=payload)
+                
+                # Update M2M relationships via ORM
+                real_obj.socias_involucradas.set(data['socias_involucradas'])
+                real_obj.personas_involucradas.set(data['personas_involucradas'])
+                real_obj.materiales_necesarios.set(data['materiales_necesarios'])
+
+                messages.success(request, "Proyecto actualizado.")
+                return redirect('proyectos:list')
+            except requests.RequestException as e:
+                messages.error(request, f"Error al actualizar: {str(e)}")
+        else:
+            messages.error(request, "Corrige los errores.")
+    else:
+        form = ProyectoForm(instance=real_obj, asociacion=request.user.profile.asociacion)
+
+    context = {
+        'section': 'proyectos',
+        'title': f"Editar: {real_obj.nombre}",
+        'form': form,
+        'object': real_obj
+    }
+    return render(request, 'proyectos/edit.html', context)
+
+@login_required
+@association_required
+def delete_proyecto(request, pk):
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('proyectos:list')
+
+    client = get_client(request)
+    try:
+        p_data = client.get(f"proyectos/{pk}")
+    except requests.RequestException:
+        messages.error(request, "Error al obtener datos.")
+        return redirect('proyectos:list')
+
+    if request.method == 'POST':
         try:
-            if self.request.user.is_authenticated:
-                context['asociacion'] = self.request.user.profile.asociacion  # type: ignore
-        except AttributeError:
-            pass
+            client.delete(f"proyectos/{pk}")
+            messages.success(request, "Proyecto eliminado.")
+            return redirect('proyectos:list')
+        except requests.RequestException as e:
+            messages.error(request, f"Error al eliminar: {str(e)}")
 
-        context['is_admin'] = is_association_admin(self.request.user)
-        return context
+    p_obj = type('obj', (object,), p_data)
 
-    def form_valid(self, form):
-        messages.success(self.request, f'Proyecto "{form.instance.nombre}" creado exitosamente.')
-        return super().form_valid(form)
-
-
-class ProyectoUpdateView(AdminRequiredMixin, AssociationFilterMixin, UpdateView):
-    """Vista para editar proyecto (solo admins)"""
-    model = Proyecto
-    form_class = ProyectoForm
-    template_name = 'proyectos/edit.html'
-    success_url = reverse_lazy('proyectos:list')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        if self.request.user.is_authenticated and hasattr(self.request.user, 'profile'):
-             kwargs['asociacion'] = self.request.user.profile.asociacion
-        return kwargs
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'proyectos'
-        context['title'] = f'Editar: {self.get_object().nombre}'  # type: ignore
-
-        # Obtener asociación del usuario de forma segura
-        try:
-            if self.request.user.is_authenticated:
-                context['asociacion'] = self.request.user.profile.asociacion  # type: ignore
-        except AttributeError:
-            pass
-
-        context['is_admin'] = is_association_admin(self.request.user)
-        return context
-
-    def form_valid(self, form):
-        messages.success(self.request, f'Proyecto "{form.instance.nombre}" actualizado exitosamente.')
-        return super().form_valid(form)
-
-
-class ProyectoDeleteView(AdminRequiredMixin, AssociationFilterMixin, DeleteView):
-    """Vista para eliminar proyecto (solo admins)"""
-    model = Proyecto
-    template_name = 'proyectos/delete.html'
-    success_url = reverse_lazy('proyectos:list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'proyectos'
-        context['title'] = f'Eliminar: {self.get_object().nombre}'  # type: ignore
-
-        # Obtener asociación del usuario de forma segura
-        try:
-            if self.request.user.is_authenticated:
-                context['asociacion'] = self.request.user.profile.asociacion  # type: ignore
-        except AttributeError:
-            pass
-
-        context['is_admin'] = is_association_admin(self.request.user)
-        return context
-
-    def delete(self, request, *args, **kwargs):
-        proyecto = self.get_object()
-        messages.success(request, f'Proyecto "{proyecto.nombre}" eliminado exitosamente.')  # type: ignore
-        return super().delete(request, *args, **kwargs)
+    context = {
+        'section': 'proyectos',
+        'title': f"Eliminar: {p_data['nombre']}",
+        'object': p_obj
+    }
+    return render(request, 'proyectos/delete.html', context)

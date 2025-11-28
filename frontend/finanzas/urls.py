@@ -8,14 +8,14 @@ app_name = 'finanzas'
 
 urlpatterns = [
     # Dashboard de contabilidad
-    path('', views.TransaccionListView.as_view(), name='list'),
-    path('dashboard/', views.TransaccionListView.as_view(), name='dashboard'),
+    path('', views.list_transacciones, name='list'),
+    path('dashboard/', views.list_transacciones, name='dashboard'),
 
     # Descarga de informes
-    path('reporte/descargar/', views.DownloadReportView.as_view(), name='download_report'),
+    path('reporte/descargar/', views.download_report, name='download_report'),
 
     # CRUD para admins
-    path('crear/', views.TransaccionCreateView.as_view(), name='create'),
-    path('editar/<int:pk>/', views.TransaccionUpdateView.as_view(), name='edit'),
-    path('eliminar/<int:pk>/', views.TransaccionDeleteView.as_view(), name='delete'),
+    path('crear/', views.create_transaccion, name='create'),
+    path('editar/<int:pk>/', views.update_transaccion, name='edit'),
+    path('eliminar/<int:pk>/', views.delete_transaccion, name='delete'),
 ]

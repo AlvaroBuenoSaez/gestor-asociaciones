@@ -172,11 +172,11 @@
                                     {% if is_admin %}
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'proyectos:edit' proyecto.pk %}"
+                                            <a href="{% url 'proyectos:edit' proyecto.id %}"
                                                class="btn btn-outline-warning" title="Editar">
                                                 ✏️
                                             </a>
-                                            <a href="{% url 'proyectos:delete' proyecto.pk %}"
+                                            <a href="{% url 'proyectos:delete' proyecto.id %}"
                                                class="btn btn-outline-danger" title="Eliminar">
                                                 🗑️
                                             </a>

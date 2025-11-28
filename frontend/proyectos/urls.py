@@ -8,10 +8,10 @@ app_name = 'proyectos'
 
 urlpatterns = [
     # Lista de proyectos
-    path('', views.ProyectoListView.as_view(), name='list'),
+    path('', views.list_proyectos, name='list'),
 
     # CRUD para admins
-    path('crear/', views.ProyectoCreateView.as_view(), name='create'),
-    path('editar/<int:pk>/', views.ProyectoUpdateView.as_view(), name='edit'),
-    path('eliminar/<int:pk>/', views.ProyectoDeleteView.as_view(), name='delete'),
+    path('crear/', views.create_proyecto, name='create'),
+    path('editar/<int:pk>/', views.update_proyecto, name='edit'),
+    path('eliminar/<int:pk>/', views.delete_proyecto, name='delete'),
 ]

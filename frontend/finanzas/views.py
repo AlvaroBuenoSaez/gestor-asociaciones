@@ -1,384 +1,392 @@
 """
 Vistas para gestión de finanzas/transacciones con CRUD completo
 """
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, View
+from django.views.generic import View
 from django.contrib import messages
-from django.db.models import Q, Sum
-from django.db.models.functions import TruncMonth
 from django.http import HttpResponse
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 import json
 import openpyxl
 from datetime import datetime, timedelta
+import requests
 
-from users.utils import is_association_admin
+from users.utils import is_association_admin, association_required
 from core.api import get_client
-from core.mixins import (
-    AssociationFilterMixin,
-    AssociationRequiredMixin,
-    AdminRequiredMixin,
-    AutoAssignAssociationMixin
-)
-from .models import Transaccion
 from .forms import TransaccionForm
+from .models import Transaccion # Import needed for Form but not for querying
 
+@login_required
+@association_required
+def list_transacciones(request):
+    """Listar transacciones consumiendo la API"""
+    asociacion_id = request.user.profile.asociacion.id
+    client = get_client(request)
 
-class TransaccionListView(AssociationRequiredMixin, AssociationFilterMixin, ListView):
-    """Vista para listar transacciones de la asociación con búsqueda y filtros"""
-    model = Transaccion
-    template_name = 'contabilidad/list.html'
-    context_object_name = 'transacciones'
-    paginate_by = 20
+    # Parámetros de filtrado
+    search = request.GET.get('search', '')
+    tipo = request.GET.get('tipo', '')
+    entidad = request.GET.get('entidad', '')
+    year = request.GET.get('year', '')
+    sort = request.GET.get('sort', '-fecha_transaccion')
+    page_number = request.GET.get('page', 1)
 
-    def get_queryset(self):
-        """Aplicar filtros de búsqueda y ordenamiento"""
-        queryset = super().get_queryset().order_by('-fecha_transaccion')
+    try:
+        transacciones_data = client.get(f"finanzas/?asociacion_id={asociacion_id}") or []
+    except requests.RequestException as e:
+        messages.error(request, f"Error al conectar con el servidor: {str(e)}")
+        transacciones_data = []
 
-        # Filtro de búsqueda
-        search = self.request.GET.get('search')
+    # Procesar datos (convertir fechas, números)
+    processed_transacciones = []
+    for t in transacciones_data:
+        try:
+            t['fecha_transaccion'] = datetime.strptime(t['fecha_transaccion'], '%Y-%m-%d').date()
+            t['cantidad'] = float(t['cantidad'])
+            processed_transacciones.append(t)
+        except (ValueError, TypeError):
+            continue
+
+    # Filtrado en memoria
+    filtered_transacciones = []
+    for t in processed_transacciones:
+        # Búsqueda
         if search:
-            queryset = queryset.filter(
-                Q(concepto__icontains=search) |
-                Q(descripcion__icontains=search) |
-                Q(entidad__icontains=search)
-            )
+            search_lower = search.lower()
+            if not (search_lower in t['concepto'].lower() or 
+                    (t['descripcion'] and search_lower in t['descripcion'].lower()) or 
+                    (t['entidad'] and search_lower in t['entidad'].lower())):
+                continue
+        
+        # Tipo
+        if tipo == 'ingreso' and t['cantidad'] < 0:
+            continue
+        if tipo == 'gasto' and t['cantidad'] > 0:
+            continue
 
-        # Filtro por tipo (ingreso/gasto)
-        tipo = self.request.GET.get('tipo')
-        if tipo == 'ingreso':
-            queryset = queryset.filter(cantidad__gt=0)
-        elif tipo == 'gasto':
-            queryset = queryset.filter(cantidad__lt=0)
+        # Entidad
+        if entidad and entidad.lower() not in (t.get('entidad') or '').lower():
+            continue
 
-        # Filtro por entidad
-        entidad = self.request.GET.get('entidad')
-        if entidad:
-            queryset = queryset.filter(entidad__icontains=entidad)
+        # Año
+        if year and t['fecha_transaccion'].year != int(year):
+            continue
 
-        # Filtro por año
-        year = self.request.GET.get('year')
-        if year:
-            queryset = queryset.filter(fecha_transaccion__year=year)
+        filtered_transacciones.append(t)
 
-        # Ordenamiento
-        sort = self.request.GET.get('sort', '-fecha_transaccion')
-        if sort:
-            queryset = queryset.order_by(sort)
+    # Ordenamiento
+    reverse = sort.startswith('-')
+    sort_key = sort.lstrip('-')
+    filtered_transacciones.sort(key=lambda x: x.get(sort_key) or '', reverse=reverse)
 
-        return queryset
+    # Paginación
+    paginator = Paginator(filtered_transacciones, 20)
+    page_obj = paginator.get_page(page_number)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'contabilidad'
-        context['asociacion'] = self.request.user.profile.asociacion
-        context['is_admin'] = is_association_admin(self.request.user)
+    # Estadísticas
+    total_ingresos = sum(t['cantidad'] for t in processed_transacciones if t['cantidad'] > 0)
+    total_gastos = sum(abs(t['cantidad']) for t in processed_transacciones if t['cantidad'] < 0)
+    balance = total_ingresos - total_gastos
 
-        # Parámetros de búsqueda actuales
-        context['current_search'] = self.request.GET.get('search', '')
-        context['current_tipo'] = self.request.GET.get('tipo', '')
-        context['current_entidad'] = self.request.GET.get('entidad', '')
-        context['current_year'] = self.request.GET.get('year', '')
-        context['current_sort'] = self.request.GET.get('sort', '-fecha_transaccion')
+    ingresos_filtrados = sum(t['cantidad'] for t in filtered_transacciones if t['cantidad'] > 0)
+    gastos_filtrados = sum(abs(t['cantidad']) for t in filtered_transacciones if t['cantidad'] < 0)
 
-        # Estadísticas financieras (de todas las transacciones, no solo las filtradas)
-        todas_transacciones = Transaccion.objects.filter(asociacion=self.request.user.profile.asociacion)
-        transacciones_filtradas = self.get_queryset()
+    # Listas para filtros
+    years_disponibles = sorted(list(set(t['fecha_transaccion'].year for t in processed_transacciones)), reverse=True)
+    entidades_disponibles = sorted(list(set(t['entidad'] for t in processed_transacciones if t.get('entidad'))))
 
-        # Stats generales
-        total_ingresos = sum(t.cantidad for t in todas_transacciones if t.cantidad > 0)
-        total_gastos = sum(abs(t.cantidad) for t in todas_transacciones if t.cantidad < 0)
-        balance = total_ingresos - total_gastos
+    # Gráficas
+    # Agrupar datos para gráficas (usando filtered_transacciones para reflejar filtros)
+    # Solo consideramos gastos para las gráficas de análisis de gastos
+    gastos_para_graficas = [t for t in filtered_transacciones if t['cantidad'] < 0]
+    
+    # 1. Evolución Mensual
+    monthly_data = {}
+    for t in gastos_para_graficas:
+        month_key = t['fecha_transaccion'].strftime('%Y-%m')
+        monthly_data[month_key] = monthly_data.get(month_key, 0) + abs(t['cantidad'])
+    
+    monthly_labels = sorted(monthly_data.keys())
+    monthly_values = [monthly_data[k] for k in monthly_labels]
 
-        # Stats filtradas
-        ingresos_filtrados = sum(t.cantidad for t in transacciones_filtradas if t.cantidad > 0)
-        gastos_filtrados = sum(abs(t.cantidad) for t in transacciones_filtradas if t.cantidad < 0)
+    # 2. Por Proyecto
+    project_data = {}
+    for t in gastos_para_graficas:
+        # Usamos ID como label temporalmente, idealmente sería el nombre
+        project_key = f"Proyecto {t['proyecto_id']}" if t['proyecto_id'] else "Sin Proyecto"
+        project_data[project_key] = project_data.get(project_key, 0) + abs(t['cantidad'])
+    
+    project_labels = list(project_data.keys())
+    project_values = [project_data[k] for k in project_labels]
 
-        context.update({
-            'total_transacciones': transacciones_filtradas.count(),
-            'total_ingresos': total_ingresos,
-            'total_gastos': total_gastos,
-            'balance': balance,
-            'ingresos_filtrados': ingresos_filtrados,
-            'gastos_filtrados': gastos_filtrados,
-        })
+    # 3. Por Entidad
+    entity_data = {}
+    for t in gastos_para_graficas:
+        entity_key = t['entidad'] or "Sin Entidad"
+        entity_data[entity_key] = entity_data.get(entity_key, 0) + abs(t['cantidad'])
+    
+    entity_labels = list(entity_data.keys())
+    entity_values = [entity_data[k] for k in entity_labels]
 
-        # Obtener años disponibles y entidades para filtros
-        context['years_disponibles'] = sorted(
-            set(t.fecha_transaccion.year for t in todas_transacciones if t.fecha_transaccion),
-            reverse=True
-        )
-        context['entidades_disponibles'] = sorted(
-            set(t.entidad for t in todas_transacciones if t.entidad and t.entidad.strip())
-        )
+    # 4. Por Año (Nuevo)
+    annual_data = {}
+    for t in gastos_para_graficas:
+        year_key = str(t['fecha_transaccion'].year)
+        annual_data[year_key] = annual_data.get(year_key, 0) + abs(t['cantidad'])
+    
+    annual_labels = sorted(annual_data.keys())
+    annual_values = [annual_data[k] for k in annual_labels]
 
-        # --- DATOS PARA GRÁFICAS ---
-        # Solo consideramos gastos (cantidad < 0) para las gráficas de "gastos de distintos tipos"
-        gastos_qs = todas_transacciones.filter(cantidad__lt=0)
+    chart_data = json.dumps({
+        'monthly': {'labels': monthly_labels, 'data': monthly_values},
+        'project': {'labels': project_labels, 'data': project_values},
+        'entity': {'labels': entity_labels, 'data': entity_values},
+        'annual': {'labels': annual_labels, 'data': annual_values}
+    })
 
-        # 1. Gastos por Mes (Últimos 12 meses)
-        gastos_por_mes = (
-            gastos_qs
-            .annotate(month=TruncMonth('fecha_transaccion'))
-            .values('month')
-            .annotate(total=Sum('cantidad'))
-            .order_by('month')
-        )
+    context = {
+        'section': 'contabilidad',
+        'asociacion': request.user.profile.asociacion,
+        'is_admin': is_association_admin(request.user),
+        'transacciones': page_obj,
+        'page_obj': page_obj,
+        'current_search': search,
+        'current_tipo': tipo,
+        'current_entidad': entidad,
+        'current_year': year,
+        'current_sort': sort,
+        'total_transacciones': len(filtered_transacciones),
+        'total_ingresos': total_ingresos,
+        'total_gastos': total_gastos,
+        'balance': balance,
+        'ingresos_filtrados': ingresos_filtrados,
+        'gastos_filtrados': gastos_filtrados,
+        'years_disponibles': years_disponibles,
+        'entidades_disponibles': entidades_disponibles,
+        'chart_data': chart_data
+    }
 
-        chart_monthly = {
-            'labels': [g['month'].strftime('%B %Y') for g in gastos_por_mes if g['month']],
-            'data': [abs(float(g['total'])) for g in gastos_por_mes if g['month']]
-        }
+    return render(request, 'contabilidad/list.html', context)
 
-        # 2. Gastos por Proyecto
-        gastos_por_proyecto = (
-            gastos_qs
-            .exclude(proyecto__isnull=True)
-            .values('proyecto__nombre')
-            .annotate(total=Sum('cantidad'))
-            .order_by('total')[:10] # Top 10
-        )
+@login_required
+@association_required
+def create_transaccion(request):
+    """Crear transacción consumiendo la API"""
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('finanzas:dashboard')
 
-        chart_project = {
-            'labels': [g['proyecto__nombre'] for g in gastos_por_proyecto],
-            'data': [abs(float(g['total'])) for g in gastos_por_proyecto]
-        }
+    if request.method == 'POST':
+        form = TransaccionForm(request.POST, request.FILES, asociacion=request.user.profile.asociacion)
+        if form.is_valid():
+            data = form.cleaned_data
+            payload = {
+                "asociacion_id": request.user.profile.asociacion.id,
+                "cantidad": float(data['cantidad']),
+                "concepto": data['concepto'],
+                "descripcion": data['descripcion'],
+                "fecha_transaccion": data['fecha_transaccion'].isoformat(),
+                "fecha_vencimiento": data['fecha_vencimiento'].isoformat() if data['fecha_vencimiento'] else None,
+                "entidad": data['entidad'],
+                "evento_id": data['evento'].id if data['evento'] else None,
+                "proyecto_id": data['proyecto'].id if data['proyecto'] else None,
+                "socia_id": data['socia'].id if data['socia'] else None,
+            }
 
-        # 3. Gastos por Entidad
-        gastos_por_entidad = (
-            gastos_qs
-            .exclude(entidad='')
-            .values('entidad')
-            .annotate(total=Sum('cantidad'))
-            .order_by('total')[:10] # Top 10
-        )
+            client = get_client(request)
+            try:
+                # 1. Crear transacción
+                response = client.post("finanzas/", data=payload)
+                
+                # 2. Subir archivo si existe
+                if 'comprobante' in request.FILES and response and 'id' in response:
+                    uploaded_file = request.FILES['comprobante']
+                    files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+                    file_data = {
+                        'asociacion_id': request.user.profile.asociacion.id,
+                        'transaction_id': response['id']
+                    }
+                    # Nota: Este endpoint de drive debe existir y funcionar
+                    client.post('drive/upload-transaction-file', data=file_data, files=files)
 
-        chart_entity = {
-            'labels': [g['entidad'] for g in gastos_por_entidad],
-            'data': [abs(float(g['total'])) for g in gastos_por_entidad]
-        }
-
-        context['chart_data'] = json.dumps({
-            'monthly': chart_monthly,
-            'project': chart_project,
-            'entity': chart_entity
-        })
-
-        return context
-
-
-class DownloadReportView(AssociationRequiredMixin, View):
-    """Vista para descargar informes financieros (Excel)"""
-
-    def get(self, request, *args, **kwargs):
-        report_type = request.GET.get('type', 'annual')
-        asociacion = request.user.profile.asociacion
-
-        # Definir rango de fechas
-        today = timezone.now().date()
-        start_date = None
-        end_date = today
-        filename_prefix = "informe"
-
-        if report_type == 'weekly':
-            start_date = today - timedelta(days=7)
-            filename_prefix = "informe_semanal"
-        elif report_type == 'quarterly':
-            # Trimestre actual
-            quarter = (today.month - 1) // 3 + 1
-            start_month = (quarter - 1) * 3 + 1
-            start_date = today.replace(month=start_month, day=1)
-            filename_prefix = "informe_trimestral"
-        elif report_type == 'annual':
-            start_date = today.replace(month=1, day=1)
-            filename_prefix = "informe_anual"
+                messages.success(request, "Transacción creada exitosamente.")
+                return redirect('finanzas:dashboard')
+            except requests.RequestException as e:
+                messages.error(request, f"Error al crear transacción: {str(e)}")
         else:
-            # Default to annual
-            start_date = today.replace(month=1, day=1)
+            messages.error(request, "Corrige los errores.")
+    else:
+        form = TransaccionForm(asociacion=request.user.profile.asociacion)
 
-        # Filtrar transacciones
-        transacciones = Transaccion.objects.filter(
-            asociacion=asociacion,
-            fecha_transaccion__gte=start_date,
-            fecha_transaccion__lte=end_date
-        ).order_by('fecha_transaccion')
+    context = {
+        'section': 'contabilidad',
+        'title': 'Nueva Transacción',
+        'form': form
+    }
+    return render(request, 'contabilidad/create.html', context)
 
-        # Crear Excel
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Informe Financiero"
+@login_required
+@association_required
+def update_transaccion(request, pk):
+    """Actualizar transacción consumiendo la API"""
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('finanzas:dashboard')
 
-        # Encabezados
-        headers = ['Fecha', 'Concepto', 'Tipo', 'Cantidad', 'Entidad', 'Proyecto', 'Evento', 'Descripción']
-        ws.append(headers)
+    client = get_client(request)
+    try:
+        t_data = client.get(f"finanzas/{pk}")
+    except requests.RequestException:
+        messages.error(request, "Error al obtener datos.")
+        return redirect('finanzas:dashboard')
 
-        # Datos
-        total_ingresos = 0
-        total_gastos = 0
+    # Crear instancia temporal
+    t_instance = Transaccion(
+        id=t_data['id'],
+        cantidad=t_data['cantidad'],
+        concepto=t_data['concepto'],
+        descripcion=t_data['descripcion'],
+        entidad=t_data['entidad'],
+        drive_file_id=t_data.get('drive_file_id'),
+        drive_file_name=t_data.get('drive_file_name'),
+        drive_file_link=t_data.get('drive_file_link'),
+        asociacion_id=t_data['asociacion_id']
+    )
+    # Fechas
+    if t_data.get('fecha_transaccion'):
+        t_instance.fecha_transaccion = datetime.strptime(t_data['fecha_transaccion'], '%Y-%m-%d').date()
+    if t_data.get('fecha_vencimiento'):
+        t_instance.fecha_vencimiento = datetime.strptime(t_data['fecha_vencimiento'], '%Y-%m-%d').date()
+    
+    # FKs (Solo IDs para el formulario, aunque ModelForm querrá objetos)
+    # Para que ModelForm funcione bien con initial, necesitamos pasar los IDs
+    # Pero ModelForm espera instancias en instance.fk.
+    # Hack: Asignar IDs a los campos _id
+    t_instance.evento_id = t_data.get('evento_id')
+    t_instance.proyecto_id = t_data.get('proyecto_id')
+    t_instance.socia_id = t_data.get('socia_id')
 
-        for t in transacciones:
-            tipo = "Ingreso" if t.cantidad >= 0 else "Gasto"
-            if t.cantidad >= 0:
-                total_ingresos += t.cantidad
-            else:
-                total_gastos += abs(t.cantidad)
-
-            row = [
-                t.fecha_transaccion,
-                t.concepto,
-                tipo,
-                t.cantidad,
-                t.entidad,
-                t.proyecto.nombre if t.proyecto else "",
-                t.evento.nombre if t.evento else "",
-                t.descripcion
-            ]
-            ws.append(row)
-
-        # Resumen al final
-        ws.append([])
-        ws.append(['Resumen del Periodo', f'{start_date} a {end_date}'])
-        ws.append(['Total Ingresos', total_ingresos])
-        ws.append(['Total Gastos', total_gastos])
-        ws.append(['Balance', total_ingresos - total_gastos])
-
-        # Ajustar ancho de columnas
-        for col in ws.columns:
-            max_length = 0
-            column = col[0].column_letter
-            for cell in col:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = (max_length + 2)
-            ws.column_dimensions[column].width = adjusted_width
-
-        # Respuesta HTTP
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{filename_prefix}_{today.strftime("%Y%m%d")}.xlsx"'
-
-        wb.save(response)
-        return response
-
-
-class TransaccionCreateView(AdminRequiredMixin, AutoAssignAssociationMixin, CreateView):
-    """Vista para crear nueva transacción (solo admins)"""
-    model = Transaccion
-    form_class = TransaccionForm
-    template_name = 'contabilidad/create.html'
-    success_url = reverse_lazy('finanzas:dashboard')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'contabilidad'
-        context['title'] = 'Nueva Transacción'
-        return context
-
-    def form_valid(self, form):
-        response = super().form_valid(form)
-
-        # Handle file upload if present
-        if 'comprobante' in self.request.FILES:
-            uploaded_file = self.request.FILES['comprobante']
-            client = get_client(self.request)
+    if request.method == 'POST':
+        form = TransaccionForm(request.POST, request.FILES, instance=t_instance, asociacion=request.user.profile.asociacion)
+        if form.is_valid():
+            data = form.cleaned_data
+            payload = {
+                "cantidad": float(data['cantidad']),
+                "concepto": data['concepto'],
+                "descripcion": data['descripcion'],
+                "fecha_transaccion": data['fecha_transaccion'].isoformat(),
+                "fecha_vencimiento": data['fecha_vencimiento'].isoformat() if data['fecha_vencimiento'] else None,
+                "entidad": data['entidad'],
+                "evento_id": data['evento'].id if data['evento'] else None,
+                "proyecto_id": data['proyecto'].id if data['proyecto'] else None,
+                "socia_id": data['socia'].id if data['socia'] else None,
+            }
 
             try:
-                files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
-                data = {
-                    'asociacion_id': self.object.asociacion.id,
-                    'transaction_id': self.object.id
-                }
+                client.put(f"finanzas/{pk}", data=payload)
+                
+                # Subir archivo si existe
+                if 'comprobante' in request.FILES:
+                    uploaded_file = request.FILES['comprobante']
+                    files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
+                    file_data = {
+                        'asociacion_id': request.user.profile.asociacion.id,
+                        'transaction_id': pk
+                    }
+                    client.post('drive/upload-transaction-file', data=file_data, files=files)
 
-                api_response = client.post('drive/upload-transaction-file', data=data, files=files)
-
-                if api_response and 'id' in api_response:
-                    self.object.drive_file_id = api_response['id']
-                    self.object.drive_file_name = api_response['name']
-                    self.object.drive_file_link = api_response.get('webViewLink')
-                    self.object.save()
-                    messages.success(self.request, 'Comprobante subido a Google Drive correctamente.')
-            except Exception as e:
-                messages.warning(self.request, f'Transacción guardada, pero error al subir archivo: {str(e)}')
-
-        tipo = "Ingreso" if form.instance.cantidad >= 0 else "Gasto"
-        messages.success(self.request, f'{tipo} "{form.instance.concepto}" registrado exitosamente.')
-        return response
-
-
-class TransaccionUpdateView(AdminRequiredMixin, AssociationFilterMixin, UpdateView):
-    """Vista para editar transacción (solo admins)"""
-    model = Transaccion
-    form_class = TransaccionForm
-    template_name = 'contabilidad/edit.html'
-    success_url = reverse_lazy('finanzas:dashboard')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'contabilidad'
-        context['title'] = f'Editar: {self.object.concepto}'
-        return context
-
-    def form_valid(self, form):
-        print("DEBUG: TransaccionUpdateView.form_valid called")
-        response = super().form_valid(form)
-
-        # Handle file upload if present
-        if 'comprobante' in self.request.FILES:
-            print(f"DEBUG: File found in request: {self.request.FILES['comprobante'].name}")
-            uploaded_file = self.request.FILES['comprobante']
-            client = get_client(self.request)
-
-            try:
-                files = {'file': (uploaded_file.name, uploaded_file.read(), uploaded_file.content_type)}
-                data = {
-                    'asociacion_id': self.object.asociacion.id,
-                    'transaction_id': self.object.id
-                }
-                print(f"DEBUG: Sending upload request to API for transaction {self.object.id}")
-
-                api_response = client.post('drive/upload-transaction-file', data=data, files=files)
-                print(f"DEBUG: API Response: {api_response}")
-
-                if api_response and 'id' in api_response:
-                    self.object.drive_file_id = api_response['id']
-                    self.object.drive_file_name = api_response['name']
-                    self.object.drive_file_link = api_response.get('webViewLink')
-                    self.object.save()
-                    messages.success(self.request, 'Comprobante subido a Google Drive correctamente.')
-                else:
-                    print("DEBUG: API response did not contain 'id'")
-            except Exception as e:
-                print(f"DEBUG: Exception during upload: {str(e)}")
-                messages.warning(self.request, f'Transacción actualizada, pero error al subir archivo: {str(e)}')
+                messages.success(request, "Transacción actualizada.")
+                return redirect('finanzas:dashboard')
+            except requests.RequestException as e:
+                messages.error(request, f"Error al actualizar: {str(e)}")
         else:
-            print("DEBUG: No 'comprobante' in request.FILES")
+            messages.error(request, "Corrige los errores.")
+    else:
+        form = TransaccionForm(instance=t_instance, asociacion=request.user.profile.asociacion)
 
-        messages.success(self.request, f'Transacción "{form.instance.concepto}" actualizada exitosamente.')
-        return response
+    context = {
+        'section': 'contabilidad',
+        'title': f"Editar: {t_data['concepto']}",
+        'form': form,
+        'object': t_instance
+    }
+    return render(request, 'contabilidad/edit.html', context)
 
-    def form_invalid(self, form):
-        print(f"DEBUG: TransaccionUpdateView.form_invalid called. Errors: {form.errors}")
-        return super().form_invalid(form)
+@login_required
+@association_required
+def delete_transaccion(request, pk):
+    """Eliminar transacción consumiendo la API"""
+    if not is_association_admin(request.user):
+        messages.error(request, "No tienes permisos.")
+        return redirect('finanzas:dashboard')
 
+    client = get_client(request)
+    try:
+        t_data = client.get(f"finanzas/{pk}")
+    except requests.RequestException:
+        messages.error(request, "Error al obtener datos.")
+        return redirect('finanzas:dashboard')
 
-class TransaccionDeleteView(AdminRequiredMixin, AssociationFilterMixin, DeleteView):
-    """Vista para eliminar transacción (solo admins)"""
-    model = Transaccion
-    template_name = 'contabilidad/delete.html'
-    success_url = reverse_lazy('finanzas:dashboard')
+    if request.method == 'POST':
+        try:
+            client.delete(f"finanzas/{pk}")
+            messages.success(request, "Transacción eliminada.")
+            return redirect('finanzas:dashboard')
+        except requests.RequestException as e:
+            messages.error(request, f"Error al eliminar: {str(e)}")
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['section'] = 'contabilidad'
-        context['title'] = f'Eliminar: {self.object.concepto}'
-        return context
+    t_obj = type('obj', (object,), t_data)
 
-    def delete(self, request, *args, **kwargs):
-        transaccion = self.get_object()
-        messages.success(request, f'Transacción "{transaccion.concepto}" eliminada exitosamente.')
-        return super().delete(request, *args, **kwargs)
+    context = {
+        'section': 'contabilidad',
+        'title': f"Eliminar: {t_data['concepto']}",
+        'object': t_obj
+    }
+    return render(request, 'contabilidad/delete.html', context)
+
+@login_required
+@association_required
+def download_report(request):
+    """Descargar informe de transacciones en Excel"""
+    asociacion_id = request.user.profile.asociacion.id
+    client = get_client(request)
+    
+    # Obtener todas las transacciones (sin paginación)
+    try:
+        transacciones_data = client.get(f"finanzas/?asociacion_id={asociacion_id}") or []
+    except requests.RequestException:
+        transacciones_data = []
+
+    # Crear libro de Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Transacciones"
+
+    # Encabezados
+    headers = ['Fecha', 'Concepto', 'Tipo', 'Cantidad', 'Entidad', 'Proyecto', 'Evento', 'Socia']
+    ws.append(headers)
+
+    # Datos
+    for t in transacciones_data:
+        tipo = "Ingreso" if t['cantidad'] > 0 else "Gasto"
+        row = [
+            t['fecha_transaccion'],
+            t['concepto'],
+            tipo,
+            t['cantidad'],
+            t['entidad'] or '',
+            t['proyecto_id'] or '', # Idealmente mostrar nombre
+            t['evento_id'] or '',   # Idealmente mostrar nombre
+            t['socia_id'] or ''     # Idealmente mostrar nombre
+        ]
+        ws.append(row)
+
+    # Preparar respuesta
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=transacciones_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    wb.save(response)
+    return response
+

@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.infrastructure.api.v1 import users, socias, eventos, drive, lugares
+from app.infrastructure.api.v1 import users, socias, eventos, drive, lugares, finanzas, proyectos
 
 app = FastAPI(
     title="Gestor Asociaciones API",
@@ -26,4 +26,8 @@ app.include_router(socias.router, prefix="/v1")
 app.include_router(eventos.router, prefix="/v1")
 app.include_router(drive.router, prefix="/v1")
 app.include_router(lugares.router, prefix="/v1")
+app.include_router(finanzas.router, prefix="/v1")
+app.include_router(proyectos.router, prefix="/v1")
+
+
 

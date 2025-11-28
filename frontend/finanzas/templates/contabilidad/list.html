@@ -51,7 +51,7 @@
                                 <label for="year" class="form-label">📅 Año</label>
                                 <select class="form-select" id="year" name="year" onchange="document.getElementById('searchForm').submit();">
                                     <option value="">Todos</option>
-                                    {% for year in years %}
+                                    {% for year in years_disponibles %}
                                     <option value="{{ year }}" {% if current_year == year|stringformat:"s" %}selected{% endif %}>{{ year }}</option>
                                     {% endfor %}
                                 </select>
@@ -60,7 +60,7 @@
                                 <label for="entidad" class="form-label">🏢 Entidad</label>
                                 <select class="form-select" id="entidad" name="entidad" onchange="document.getElementById('searchForm').submit();">
                                     <option value="">Todas</option>
-                                    {% for entidad in entidades %}
+                                    {% for entidad in entidades_disponibles %}
                                     <option value="{{ entidad }}" {% if current_entidad == entidad %}selected{% endif %}>{{ entidad }}</option>
                                     {% endfor %}
                                 </select>
@@ -144,7 +144,7 @@
             </div>
 
             <!-- Gráficas y Reportes (Colapsable) -->
-            <div class="collapse show" id="reportsCollapse">
+            <div class="collapse" id="reportsCollapse">
                 <div class="row mb-4">
                     <!-- Gráficas -->
                     <div class="col-md-8">
@@ -153,6 +153,7 @@
                                 <h5 class="mb-0">📊 Análisis de Gastos</h5>
                                 <select class="form-select form-select-sm w-auto" id="chartTypeSelector">
                                     <option value="monthly">📅 Evolución Mensual</option>
+                                    <option value="annual">📆 Evolución Anual</option>
                                     <option value="project">🏗️ Por Proyecto</option>
                                     <option value="entity">🏢 Por Entidad</option>
                                 </select>
@@ -252,11 +253,11 @@
                                     {% if is_admin %}
                                     <td>
                                         <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{% url 'finanzas:edit' transaccion.pk %}"
+                                            <a href="{% url 'finanzas:edit' transaccion.id %}"
                                                class="btn btn-outline-warning" title="Editar">
                                                 ✏️
                                             </a>
-                                            <a href="{% url 'finanzas:delete' transaccion.pk %}"
+                                            <a href="{% url 'finanzas:delete' transaccion.id %}"
                                                class="btn btn-outline-danger" title="Eliminar">
                                                 🗑️
                                             </a>

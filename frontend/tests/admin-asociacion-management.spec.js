@@ -1,12 +1,11 @@
 import { test } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('http://localhost:8001/admin/login/?next=/admin/auth/user/');
-  await page.getByRole('textbox', { name: 'Nombre de usuario:' }).click();
-  await page.getByRole('textbox', { name: 'Nombre de usuario:' }).fill('admin');
-  await page.getByRole('textbox', { name: 'Nombre de usuario:' }).press('Tab');
-  await page.getByRole('textbox', { name: 'Contraseña:' }).fill('admin123456');
-  await page.getByRole('button', { name: 'Iniciar sesión' }).click();
+  await page.goto('http://localhost:8000/admin/login/?next=/admin/auth/user/');
+  await page.locator('input[name="username"]').fill('admin');
+  await page.locator('input[name="password"]').fill('admin123456');
+  // Admin login usually uses input[type="submit"]
+  await page.locator('button[type="submit"]').click();
   await page.getByRole('link', { name: 'Añadir' }).nth(1).click();
   await page.getByRole('textbox', { name: 'Nombre de la Asociación:' }).fill('Asocaición a Eliminar');
   await page.getByRole('textbox', { name: 'Nombre de la Asociación:' }).press('Tab');
