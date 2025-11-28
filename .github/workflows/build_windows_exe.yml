@@ -106,7 +106,7 @@ jobs:
           $err = Join-Path $PWD "app_err.log"
           $process = Start-Process -FilePath ".\GestorAsociaciones.exe" -RedirectStandardOutput $out -RedirectStandardError $err -NoNewWindow -PassThru
           echo "App running with ID $($process.Id)"
-          
+
           # Wait and poll until service is up (or timeout)
           $ready = $false
           $maxAttempts = 20
