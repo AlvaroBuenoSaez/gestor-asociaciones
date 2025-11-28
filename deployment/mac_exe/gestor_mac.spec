@@ -41,6 +41,11 @@ hiddenimports = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Añadir configuración del proyecto
+    'asonet_django',
+    'asonet_django.settings',
+    'asonet_django.urls',
+    'asonet_django.asgi',
     # Añadir apps propias a hiddenimports por si acaso
     'core', 'users', 'socias', 'finanzas', 'eventos', 'proyectos', 'entidades',
     'core.apps', 'users.apps', 'socias.apps', 'finanzas.apps', 'eventos.apps', 'proyectos.apps', 'entidades.apps',
