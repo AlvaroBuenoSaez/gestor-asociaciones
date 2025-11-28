@@ -1,0 +1,28 @@
+GUÍA DE INSTALACIÓN RÁPIDA (MACOS)
+==================================
+
+1. Descomprime este archivo ZIP en una carpeta (ej: Documentos/GestorAsociaciones).
+   IMPORTANTE: No ejecutes el programa directamente desde el ZIP.
+
+2. Configuración:
+   - Verás un archivo llamado ".env.template".
+   - Renómbralo a ".env" (sí, empieza por punto).
+     Nota: En Finder, los archivos que empiezan por punto pueden estar ocultos.
+     Pulsa Cmd + Shift + . (punto) para verlos.
+   - Ábrelo con TextEdit y configura las opciones si es necesario.
+
+3. Ejecución:
+   - Haz doble clic en "GestorAsociaciones" (el archivo ejecutable unix).
+   - Se abrirá una ventana de Terminal.
+   - Automáticamente se abrirá tu navegador web en http://127.0.0.1:8000
+
+   Nota de Seguridad:
+   Si macOS te dice que "no se puede abrir porque es de un desarrollador no identificado":
+   1. Haz clic derecho (o Ctrl+Clic) en el archivo "GestorAsociaciones".
+   2. Selecciona "Abrir" en el menú.
+   3. En la ventana de advertencia, haz clic en "Abrir".
+
+4. Datos:
+   - La primera vez que lo ejecutes, se creará un archivo "db.sqlite3" en esta misma carpeta.
+   - Ese archivo contiene todos tus datos.
+   - ¡Haz copias de seguridad de "db.sqlite3" regularmente!
