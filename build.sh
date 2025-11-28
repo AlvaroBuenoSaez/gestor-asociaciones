@@ -12,3 +12,7 @@ python frontend/manage.py collectstatic --no-input
 
 echo "🗄️ Aplicando migraciones..."
 python frontend/manage.py migrate
+
+echo "👤 Verificando/Creando Superusuario..."
+python scripts/create_superuser.py
+
