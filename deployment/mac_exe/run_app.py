@@ -71,20 +71,23 @@ if __name__ == "__main__":
         # Esto permite entrar a la app nada más instalarla
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        
+
         # Solo intentamos crear si no hay superusuarios
         if not User.objects.filter(is_superuser=True).exists():
             admin_user = os.getenv('ADMIN_USER', 'admin')
             # Support both ADMIN_PASS (from .env) and ADMIN_PASSWORD
             admin_pass = os.getenv('ADMIN_PASS', os.getenv('ADMIN_PASSWORD', 'admin'))
             admin_email = os.getenv('ADMIN_EMAIL', 'admin@asonet.local')
-            
+
             print(f"Creando superusuario inicial: {admin_user}")
+            print(f"Password length: {len(admin_pass)}")
             try:
                 User.objects.create_superuser(username=admin_user, email=admin_email, password=admin_pass)
                 print("¡Superusuario creado correctamente!")
             except Exception as e:
                 print(f"Error al crear superusuario: {e}")
+        else:
+            print("Superusuario ya existe. Saltando creación.")
 
         # Configuración del servidor
         config = uvicorn.Config(

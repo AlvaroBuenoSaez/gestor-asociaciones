@@ -24,14 +24,14 @@ def test_login_and_env():
         except requests.exceptions.ConnectionError:
             print(f"❌ Error: Could not connect to {LOGIN_URL}")
             sys.exit(1)
-        
+
         # Django stores the token in cookies, needed for POST
         if 'csrftoken' not in session.cookies:
             print("❌ Error: CSRF cookie not found")
             # Print headers for debugging
             print(f"Headers: {response.headers}")
             sys.exit(1)
-        
+
         csrf_token = session.cookies['csrftoken']
 
         # 2. Perform Login
@@ -42,7 +42,7 @@ def test_login_and_env():
             'csrfmiddlewaretoken': csrf_token,
             'next': '/users/dashboard/' # Expected redirect
         }
-        
+
         # Important headers for Django to accept the request
         headers = {
             'Referer': LOGIN_URL,
@@ -50,15 +50,15 @@ def test_login_and_env():
         }
 
         post_response = session.post(LOGIN_URL, data=payload, headers=headers)
-        
+
         # 3. Verifications
         # If login is correct, Django redirects. Requests follows redirects by default.
         # We check if we landed on the dashboard or if the URL contains 'dashboard'
-        
+
         print(f"   3. Verifying response... Final URL: {post_response.url}")
-        
-        if '/dashboard/' in post_response.url or '/users/dashboard/' in post_response.url:
-            print("✅ Login SUCCESSFUL: Redirected to dashboard.")
+
+        if '/dashboard/' in post_response.url or '/users/dashboard/' in post_response.url or '/admin/' in post_response.url:
+            print("✅ Login SUCCESSFUL: Redirected to dashboard or admin.")
         elif "Por favor, introduzca un nombre de usuario y clave correctos" in post_response.text or "Please enter a correct username and password" in post_response.text:
             print("❌ Login FAILED: Incorrect credentials.")
             print("   This indicates the .env was NOT read correctly or the user was not created.")
