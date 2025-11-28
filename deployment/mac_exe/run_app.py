@@ -33,6 +33,13 @@ if False:
     import eventos.apps
     import proyectos.apps
     import entidades.apps
+    # URLs
+    import users.urls
+    import socias.urls
+    import finanzas.urls
+    import eventos.urls
+    import proyectos.urls
+    import entidades.urls
 
 def open_browser():
     """Abre el navegador automáticamente"""
@@ -41,21 +48,21 @@ def open_browser():
 if __name__ == "__main__":
     # Establecer variable de entorno para configuración de Django
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "asonet_django.settings")
-    
+
     # Iniciar navegador tras una breve pausa
     Timer(1.5, open_browser).start()
-    
+
     try:
         # Importar la aplicación ASGI directamente
         # Esto es necesario para que PyInstaller encuentre el módulo correctamente
         from asonet_django.asgi import application
-        
+
         # Ejecutar migraciones automáticamente al inicio
         # Esto asegura que la DB tenga las tablas necesarias si es la primera ejecución
         print("Verificando estado de la base de datos...")
         from django.core.management import call_command
         call_command('migrate', interactive=False)
-        
+
         # Configuración del servidor
         config = uvicorn.Config(
             app=application,
@@ -66,14 +73,14 @@ if __name__ == "__main__":
         )
         server = uvicorn.Server(config)
         server.run()
-        
+
     except Exception as e:
         # Loguear error a un archivo para depuración
         with open("error_log.txt", "w") as f:
             f.write(f"Error fatal: {e}\n")
             import traceback
             traceback.print_exc(file=f)
-            
+
         print(f"Error fatal: {e}")
         import traceback
         traceback.print_exc()
