@@ -33,6 +33,15 @@ jobs:
         '
         echo "Backend is ready!"
 
+    - name: Install test dependencies
+      run: pip install requests
+
+    - name: Run Integration Test (Login & Env Check)
+      env:
+        ADMIN_USER: admin
+        ADMIN_PASS: admin123456
+      run: python tests/verify_deployment.py
+
     - name: Run Django Tests
       run: |
         docker compose -f deployment/docker/docker-compose.yml exec -T web python frontend/manage.py test

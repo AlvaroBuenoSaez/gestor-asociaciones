@@ -82,6 +82,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: windows-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
@@ -96,6 +99,11 @@ jobs:
           echo "SECRET_KEY=testing_key_win" > config.env
           echo "DEBUG=True" >> config.env
           echo "API_BASE_URL=http://localhost:8000/api/v1" >> config.env
+          echo "ADMIN_USER=admin" >> config.env
+          echo "ADMIN_PASS=admin123456" >> config.env
+
+      - name: Install Test Dependencies
+        run: pip install requests
 
       - name: Run and Test Connection
         shell: powershell
@@ -145,10 +153,21 @@ jobs:
             # Upload logs as failure artifacts
             Write-Host "::error::App failed to become healthy, see app_out.log / app_err.log / last_response_body.html"
             exit 1
-          } else {
-            # successful: stop app
-            Stop-Process -Id $process.Id -Force
           }
+
+          # Run Integration Test (Login)
+          Write-Host "Running Integration Test..."
+          $env:ADMIN_USER="admin"
+          $env:ADMIN_PASS="admin123456"
+          python ../tests/verify_deployment.py
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Integration test failed."
+            Stop-Process -Id $process.Id -Force
+            exit 1
+          }
+
+          # successful: stop app
+          Stop-Process -Id $process.Id -Force
 
       - name: Upload debug logs
         if: failure()

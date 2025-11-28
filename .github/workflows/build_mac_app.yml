@@ -82,6 +82,9 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
     runs-on: macos-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Download Artifact
         uses: actions/download-artifact@v4
         with:
@@ -96,7 +99,12 @@ jobs:
           echo "SECRET_KEY=testing_key_mac" > config.env
           echo "DEBUG=True" >> config.env
           echo "API_BASE_URL=http://localhost:8000/api/v1" >> config.env
+          echo "ADMIN_USER=admin" >> config.env
+          echo "ADMIN_PASS=admin123456" >> config.env
           chmod +x GestorAsociaciones
+
+      - name: Install Test Dependencies
+        run: pip install requests
 
       - name: Run and Test Connection
         run: |
@@ -141,6 +149,19 @@ jobs:
             exit 1
           fi
           
+          # Run Integration Test (Login)
+          echo "Running Integration Test..."
+          export ADMIN_USER=admin
+          export ADMIN_PASS=admin123456
+          python ../tests/verify_deployment.py
+          TEST_EXIT_CODE=$?
+          
+          if [ $TEST_EXIT_CODE -ne 0 ]; then
+            echo "::error::Integration test failed."
+            kill $PID
+            exit 1
+          fi
+
           kill $PID
 
       - name: Upload debug logs
