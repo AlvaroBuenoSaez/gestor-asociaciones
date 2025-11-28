@@ -71,19 +71,19 @@ admin.site.register(User, CustomUserAdmin)
 class AdminInvitationAdmin(admin.ModelAdmin):
     list_display = ('email', 'asociacion', 'created_at', 'expires_at', 'used', 'invited_by', 'status_display')
     readonly_fields = ('token', 'created_at', 'expires_at', 'used', 'invited_by')
-    
+
     def save_model(self, request, obj, form, change):
         if not change: # Creating new
             obj.invited_by = request.user
             super().save_model(request, obj, form, change)
-            
+
             # Send email
             try:
                 path = reverse('users:accept_invite', args=[obj.token])
                 full_url = request.build_absolute_uri(path)
-                
+
                 tipo_usuario = f"administrador de {obj.asociacion}" if obj.asociacion else "Superusuario"
-                
+
                 send_mail(
                     'Invitación para Administrador - Gestor Asociaciones',
                     f'Hola,\n\nHas sido invitado para ser {tipo_usuario}.\n\nHaz clic aquí para registrarte (válido por 15 min): {full_url}',

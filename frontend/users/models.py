@@ -17,10 +17,10 @@ class AdminInvitation(models.Model):
     """
     email = models.EmailField(unique=True, verbose_name="Correo Electrónico")
     asociacion = models.ForeignKey(
-        AsociacionVecinal, 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
+        AsociacionVecinal,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         verbose_name="Asociación (Dejar vacío para Superusuario)",
         help_text="Si se selecciona, el usuario será administrador de esta asociación. Si se deja vacío, será Superusuario del sistema."
     )

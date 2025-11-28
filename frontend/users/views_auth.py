@@ -50,17 +50,17 @@ def user_logout(request):
 def accept_invite(request, token):
     """Vista para aceptar invitación de administrador"""
     invitation = get_object_or_404(AdminInvitation, token=token)
-    
+
     if not invitation.is_valid:
         messages.error(request, "Esta invitación ha expirado o ya ha sido usada.")
         return redirect('users:login')
-        
+
     if request.method == 'POST':
         form = AdminRegistrationForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
             user.email = invitation.email
-            
+
             if invitation.asociacion:
                 # Es un administrador de asociación (Dashboard)
                 user.is_staff = False
@@ -69,21 +69,21 @@ def accept_invite(request, token):
                 # Es un superusuario (Admin Site)
                 user.is_staff = True
                 user.is_superuser = True
-            
+
             user.save()
-            
+
             # El perfil se crea automáticamente por la señal post_save
             if invitation.asociacion:
                 profile = user.profile
                 profile.asociacion = invitation.asociacion
                 profile.role = 'admin'
                 profile.save()
-            
+
             invitation.used = True
             invitation.save()
-            
+
             login(request, user)
-            
+
             if user.is_superuser:
                 messages.success(request, f"¡Bienvenido Superusuario {user.username}!")
                 return redirect('admin:index')
@@ -92,7 +92,7 @@ def accept_invite(request, token):
                 return redirect('users:dashboard')
     else:
         form = AdminRegistrationForm()
-        
+
     return render(request, 'auth/accept_invite.html', {'form': form, 'email': invitation.email})
 
 
