@@ -40,6 +40,10 @@ if False:
     import eventos.urls
     import proyectos.urls
     import entidades.urls
+    # Context Processors y Utils
+    import core.context_processors
+    import core.mixins
+    import users.utils
 
 def open_browser():
     """Abre el navegador automáticamente"""
