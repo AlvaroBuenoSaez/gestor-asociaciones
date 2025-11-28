@@ -24,3 +24,18 @@ GUÍA DE INSTALACIÓN RÁPIDA (MACOS)
    - La primera vez que lo ejecutes, se creará un archivo "db.sqlite3" en esta misma carpeta.
    - Ese archivo contiene todos tus datos.
    - ¡Haz copias de seguridad de "db.sqlite3" regularmente!
+
+SOLUCIÓN DE PROBLEMAS (MÉTODO TERMINAL)
+=======================================
+Si el doble clic no funciona o la ventana se cierra inmediatamente, sigue estos pasos
+para ejecutarlo exactamente igual que en nuestros tests de verificación:
+
+1. Abre la aplicación "Terminal" (Cmd + Espacio, escribe "Terminal").
+2. Escribe "cd " (con un espacio al final) y arrastra la carpeta donde descomprimiste
+   los archivos dentro de la ventana de la terminal. Pulsa Enter.
+3. Ejecuta el siguiente comando para asegurar permisos:
+   chmod +x GestorAsociaciones
+4. Ejecuta la aplicación:
+   ./GestorAsociaciones
+
+Esto te mostrará cualquier error en pantalla si algo falla.
