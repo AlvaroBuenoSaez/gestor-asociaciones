@@ -1,0 +1,24 @@
+GUÍA DE INSTALACIÓN RÁPIDA (WINDOWS)
+====================================
+
+1. Descomprime este archivo ZIP en una carpeta (ej: C:\GestorAsociaciones).
+   IMPORTANTE: No ejecutes el programa directamente desde el ZIP.
+
+2. Configuración:
+   - Verás un archivo llamado ".env.template".
+   - Renómbralo a ".env" (sí, empieza por punto).
+   - Ábrelo con el Bloc de Notas y configura las opciones si es necesario (ej. claves de API).
+   - Si no tienes claves, el programa funcionará, pero algunas funciones (mapas, correos) estarán limitadas.
+
+3. Ejecución:
+   - Haz doble clic en "GestorAsociaciones.exe".
+   - Se abrirá una ventana negra (consola) que debe permanecer abierta.
+   - Automáticamente se abrirá tu navegador web en http://127.0.0.1:8000
+
+4. Datos:
+   - La primera vez que lo ejecutes, se creará un archivo "db.sqlite3" en esta misma carpeta.
+   - Ese archivo contiene todos tus datos (socias, contabilidad, etc.).
+   - ¡Haz copias de seguridad de "db.sqlite3" regularmente!
+
+Soporte:
+Si la ventana negra se cierra inmediatamente, revisa si has creado correctamente el archivo .env.

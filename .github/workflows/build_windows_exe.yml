@@ -1,0 +1,61 @@
+name: Build Windows Executable
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build EXE on Windows
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Collect Static Files
+      run: |
+        cd frontend
+        python manage.py collectstatic --noinput
+      env:
+        # Asegurar que no falle si faltan variables de entorno en settings
+        DJANGO_SETTINGS_MODULE: asonet_django.settings
+
+    - name: Build Executable with PyInstaller
+      run: |
+        cd deployment/win_exe
+        pyinstaller gestor.spec
+
+    - name: Prepare Release Package
+      run: |
+        mkdir release_dist
+        copy deployment/win_exe/dist/GestorAsociaciones.exe release_dist/
+        copy deployment/win_exe/.env.template release_dist/
+        copy deployment/win_exe/INSTRUCCIONES.txt release_dist/
+        
+    - name: Zip Release
+      uses: thedoctor0/zip-release@0.7.5
+      with:
+        type: 'zip'
+        filename: 'GestorAsociaciones_Win64.zip'
+        directory: 'release_dist'
+
+    - name: Upload Release Asset
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: release_dist/GestorAsociaciones_Win64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

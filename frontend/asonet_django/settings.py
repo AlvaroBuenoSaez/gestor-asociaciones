@@ -12,13 +12,28 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+if getattr(sys, 'frozen', False):
+    # Ejecutándose como PyInstaller bundle (EXE)
+    # BASE_DIR apunta a la carpeta temporal _MEIPASS donde están los assets
+    BASE_DIR = Path(sys._MEIPASS)
+    # DB_DIR apunta a la carpeta del ejecutable para persistencia
+    DB_DIR = Path(sys.executable).parent
+else:
+    # Ejecución normal (Desarrollo)
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    DB_DIR = BASE_DIR
 
 # Load environment variables from .env file in the root of the workspace
-env_path = BASE_DIR.parent / '.env'
+# En modo EXE, buscamos el .env junto al ejecutable
+if getattr(sys, 'frozen', False):
+    env_path = DB_DIR / '.env'
+else:
+    env_path = BASE_DIR.parent / '.env'
+
 print(f"Loading .env from: {env_path}")
 if env_path.exists():
     print(".env file found!")
@@ -104,7 +119,7 @@ WSGI_APPLICATION = 'asonet_django.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': DB_DIR / 'db.sqlite3',
     }
 }
 
