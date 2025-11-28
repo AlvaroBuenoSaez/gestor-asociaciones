@@ -75,7 +75,8 @@ if __name__ == "__main__":
         # Solo intentamos crear si no hay superusuarios
         if not User.objects.filter(is_superuser=True).exists():
             admin_user = os.getenv('ADMIN_USER', 'admin')
-            admin_pass = os.getenv('ADMIN_PASSWORD', 'admin')
+            # Support both ADMIN_PASS (from .env) and ADMIN_PASSWORD
+            admin_pass = os.getenv('ADMIN_PASS', os.getenv('ADMIN_PASSWORD', 'admin'))
             admin_email = os.getenv('ADMIN_EMAIL', 'admin@asonet.local')
             
             print(f"Creando superusuario inicial: {admin_user}")
