@@ -7,8 +7,16 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.cache import never_cache
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.template.loader import render_to_string
+from django.core.mail import send_mail
+from django.conf import settings
+from django.db.models import Q
+from django.contrib.auth.models import User
 from .models import AdminInvitation
-from .forms import AdminRegistrationForm
+from .forms import AdminRegistrationForm, PasswordResetRequestForm
 
 
 @csrf_protect
@@ -94,6 +102,88 @@ def accept_invite(request, token):
         form = AdminRegistrationForm()
 
     return render(request, 'auth/accept_invite.html', {'form': form, 'email': invitation.email})
+
+
+def password_reset_request(request):
+    """Vista para solicitar restablecimiento de contraseña"""
+    if request.method == 'POST':
+        form = PasswordResetRequestForm(request.POST)
+        if form.is_valid():
+            identifier = form.cleaned_data['identifier']
+            # Buscar por username o email
+            user = User.objects.filter(Q(username=identifier) | Q(email=identifier)).first()
+            
+            if user and user.email:
+                # Guardar ID en sesión para mostrar el email enmascarado en el siguiente paso
+                request.session['reset_user_id'] = user.id
+                return redirect('users:password_reset_confirm_send')
+            else:
+                messages.error(request, "No se encontró un usuario con ese nombre o correo electrónico.")
+    else:
+        form = PasswordResetRequestForm()
+    
+    return render(request, 'auth/password_reset_request.html', {'form': form})
+
+
+def password_reset_confirm_send(request):
+    """Vista para confirmar el envío del correo con el email enmascarado"""
+    user_id = request.session.get('reset_user_id')
+    if not user_id:
+        return redirect('users:password_reset_request')
+    
+    user = get_object_or_404(User, id=user_id)
+    
+    # Enmascarar email: e*************@gmail.com
+    email_parts = user.email.split('@')
+    if len(email_parts) == 2:
+        username_part = email_parts[0]
+        domain_part = email_parts[1]
+        if len(username_part) > 1:
+            masked_username = username_part[0] + '*' * (len(username_part) - 1)
+        else:
+            masked_username = username_part 
+        masked_email = f"{masked_username}@{domain_part}"
+    else:
+        masked_email = user.email
+        
+    if request.method == 'POST':
+        # Enviar correo
+        subject = "Restablecer contraseña - Gestor Asociaciones"
+        email_template_name = "auth/password_reset_email.html"
+        c = {
+            "email": user.email,
+            'domain': request.META['HTTP_HOST'],
+            'site_name': 'Gestor Asociaciones',
+            "uid": urlsafe_base64_encode(force_bytes(user.pk)),
+            "user": user,
+            'token': default_token_generator.make_token(user),
+            'protocol': 'https' if request.is_secure() else 'http',
+        }
+        email_content = render_to_string(email_template_name, c)
+        
+        try:
+            send_mail(
+                subject, 
+                email_content, 
+                settings.DEFAULT_FROM_EMAIL, 
+                [user.email], 
+                fail_silently=False,
+                html_message=email_content # Enviar como HTML también
+            )
+            # Limpiar sesión
+            if 'reset_user_id' in request.session:
+                del request.session['reset_user_id']
+            return redirect('users:password_reset_done')
+        except Exception as e:
+             print(f"Error enviando correo: {e}")
+             messages.error(request, "Error al enviar el correo. Por favor inténtalo más tarde.")
+             
+    return render(request, 'auth/password_reset_confirm_send.html', {'masked_email': masked_email})
+
+
+def password_reset_done(request):
+    """Vista de confirmación de envío"""
+    return render(request, 'auth/password_reset_done.html')
 
 
 def home(request):

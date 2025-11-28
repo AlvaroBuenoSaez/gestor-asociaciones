@@ -162,6 +162,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Si existen variables de entorno para email, usa SMTP (correo real).
 # Si no, usa la consola (desarrollo).
 
+PASSWORD_RESET_TIMEOUT = 900  # 15 minutos en segundos
+
 if os.getenv('EMAIL_HOST_USER'):
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')

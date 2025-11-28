@@ -3,8 +3,13 @@ URLs para el módulo users
 Organizadas por categorías de funcionalidad
 """
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
+from django.urls import reverse_lazy
 from . import views
-from .views_auth import user_login, user_logout, home, accept_invite
+from .views_auth import (
+    user_login, user_logout, home, accept_invite,
+    password_reset_request, password_reset_confirm_send, password_reset_done
+)
 from .views_dashboard import (
     dashboard, drive_callback,
     backend_management, drive_upload, drive_delete, drive_create_folder, drive_select_folder,
@@ -26,6 +31,21 @@ auth_patterns = [
     path("login/", user_login, name="login"),
     path("logout/", user_logout, name="logout"),
     path("invite/<uuid:token>/", accept_invite, name="accept_invite"),
+
+    # Password Reset Custom Flow
+    path("password-reset/", password_reset_request, name="password_reset_request"),
+    path("password-reset/confirm-send/", password_reset_confirm_send, name="password_reset_confirm_send"),
+    path("password-reset/done/", password_reset_done, name="password_reset_done"),
+    
+    # Django Built-in views for the actual reset (token verification and new password)
+    path("reset/<uidb64>/<token>/", auth_views.PasswordResetConfirmView.as_view(
+        template_name='auth/password_reset_confirm.html',
+        success_url=reverse_lazy('users:password_reset_complete')
+    ), name="password_reset_confirm"),
+    
+    path("reset/complete/", auth_views.PasswordResetCompleteView.as_view(
+        template_name='auth/password_reset_complete.html'
+    ), name="password_reset_complete"),
 ]
 
 # =============================================================================

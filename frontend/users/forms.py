@@ -90,6 +90,15 @@ class AdminRegistrationForm(UserCreationForm):
         self.fields['password2'].widget.attrs['class'] = 'form-control'
 
 
+class PasswordResetRequestForm(forms.Form):
+    """Formulario para solicitar restablecimiento de contraseña"""
+    identifier = forms.CharField(
+        label="Usuario o Correo Electrónico",
+        max_length=254,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Usuario o email'})
+    )
+
+
 # =============================================================================
 # FORMULARIOS PARA GESTIÓN DE ASOCIACIONES (Para superusuarios)
 # =============================================================================

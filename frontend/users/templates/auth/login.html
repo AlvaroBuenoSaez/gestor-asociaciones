@@ -92,7 +92,9 @@
                         </form>
                     </div>
                     <div class="card-footer bg-light text-center py-3 border-0">
-                        <small class="text-muted">¿Olvidaste tu contraseña? Contacta al administrador.</small>
+                        <a href="{% url 'users:password_reset_request' %}" class="text-decoration-none text-muted small">
+                            ¿Olvidaste tu contraseña?
+                        </a>
                     </div>
                 </div>
             </div>
