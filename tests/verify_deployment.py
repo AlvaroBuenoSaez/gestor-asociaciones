@@ -10,8 +10,8 @@ USERNAME = os.getenv("ADMIN_USER", "admin")
 PASSWORD = os.getenv("ADMIN_PASS", "admin123456")
 
 def test_login_and_env():
-    print(f"🔵 Starting integration test against {BASE_URL}")
-    print(f"🔵 Attempting login with user: {USERNAME}")
+    print(f"[INFO] Starting integration test against {BASE_URL}")
+    print(f"[INFO] Attempting login with user: {USERNAME}")
 
     session = requests.Session()
 
@@ -22,12 +22,12 @@ def test_login_and_env():
             response = session.get(LOGIN_URL)
             response.raise_for_status()
         except requests.exceptions.ConnectionError:
-            print(f"❌ Error: Could not connect to {LOGIN_URL}")
+            print(f"[ERROR] Error: Could not connect to {LOGIN_URL}")
             sys.exit(1)
 
         # Django stores the token in cookies, needed for POST
         if 'csrftoken' not in session.cookies:
-            print("❌ Error: CSRF cookie not found")
+            print("[ERROR] Error: CSRF cookie not found")
             # Print headers for debugging
             print(f"Headers: {response.headers}")
             sys.exit(1)
@@ -58,30 +58,30 @@ def test_login_and_env():
         print(f"   3. Verifying response... Final URL: {post_response.url}")
 
         if '/dashboard/' in post_response.url or '/users/dashboard/' in post_response.url or '/admin/' in post_response.url:
-            print("✅ Login SUCCESSFUL: Redirected to dashboard or admin.")
+            print("[SUCCESS] Login SUCCESSFUL: Redirected to dashboard or admin.")
         elif "Por favor, introduzca un nombre de usuario y clave correctos" in post_response.text or "Please enter a correct username and password" in post_response.text:
-            print("❌ Login FAILED: Incorrect credentials.")
+            print("[ERROR] Login FAILED: Incorrect credentials.")
             print("   This indicates the .env was NOT read correctly or the user was not created.")
             sys.exit(1)
         else:
             # Check if we are still on the login page
             if '/login/' in post_response.url:
-                print("❌ Login FAILED: Still on login page.")
+                print("[ERROR] Login FAILED: Still on login page.")
                 # Print a snippet of the body to see if there are errors
                 print(f"   Response snippet: {post_response.text[:500]}")
                 sys.exit(1)
             else:
-                print(f"⚠️ Unexpected result. Final URL: {post_response.url}")
+                print(f"[WARNING] Unexpected result. Final URL: {post_response.url}")
                 # It might be a success if we are not on login page and status is 200
                 if post_response.status_code == 200:
                      print("   Assuming success as we moved away from login page.")
                 else:
                      sys.exit(1)
 
-        print("✅ Integration test completed successfully.")
+        print("[SUCCESS] Integration test completed successfully.")
 
     except Exception as e:
-        print(f"❌ Exception during test: {e}")
+        print(f"[ERROR] Exception during test: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
