@@ -124,7 +124,7 @@ jobs:
                 Write-Host "HTTP $($resp.StatusCode) on attempt $attempt"
               }
             } catch {
-              Write-Host "Attempt $attempt: not ready yet ($_)"
+              Write-Host "Attempt ${attempt}: not ready yet ($_)"
             }
           }
 
